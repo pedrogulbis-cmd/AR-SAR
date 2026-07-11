@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1220">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Étoiles Jaunes — Tracker AR</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.6l2.85 5.77 6.37.93-4.61 4.49 1.09 6.34L12 17.14l-5.7 3 1.09-6.35-4.61-4.49 6.37-.93L12 2.6z' fill='%23F5C64F'/%3E%3C/svg%3E">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+:root{
+  --bg:#0E1220; --panel:#151B2C; --line:#232B40; --line2:#2A3350;
+  --txt:#E8EAF2; --muted:#8A92A8; --dim:#5A6378;
+  --gold:#F5C64F; --violet:#8B7BFF; --red:#FF8A7A; --green:#7BD88F;
+  --display:'Bricolage Grotesque','Avenir Next',sans-serif;
+  --body:'IBM Plex Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--txt);font-family:var(--body);min-height:100vh;
+  padding-bottom:calc(30px + env(safe-area-inset-bottom))}
+header{padding:26px 18px 8px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--violet);font-weight:600}
+h1{font-family:var(--display);font-weight:800;font-size:27px;line-height:1.15;margin-top:6px}
+h1 em{font-style:normal;color:var(--gold)}
+.sub{color:var(--muted);margin-top:6px;font-size:13.5px}
+.dash{margin:16px 12px;padding:16px 16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.bigline{display:flex;align-items:baseline;gap:10px}
+.bignum{font-family:var(--display);font-size:40px;font-weight:800;color:var(--gold);line-height:1}
+.saved{margin-left:auto;font-size:11.5px;color:transparent;transition:color .3s}
+.saved.on{color:var(--green)}
+.scopenote{color:var(--dim);font-size:11px;margin-top:4px}
+.valueline{display:flex;align-items:baseline;gap:8px;margin-top:12px;padding:10px 12px;
+  background:#101626;border:1px solid var(--line);border-radius:12px}
+.valueline .lbl{color:var(--muted);font-size:12.5px}
+.valueline .val{font-family:var(--display);font-weight:800;font-size:21px;color:var(--green);margin-left:auto}
+.spentline{display:flex;align-items:baseline;gap:8px;margin-top:8px;padding:0 2px}
+.spentline .lbl{color:var(--muted);font-size:12.5px}
+.spentline .val{font-size:14px;font-weight:600;margin-left:auto}
+.refreshrow{display:flex;align-items:center;gap:10px;margin-top:12px}
+.refreshbtn{flex:1;padding:11px;border-radius:12px;border:1px solid var(--line2);
+  background:#101626;color:var(--txt);font-family:var(--body);font-size:13.5px;font-weight:600}
+.refreshbtn:disabled{opacity:.55}
+.refreshstatus{color:var(--dim);font-size:11.5px;margin-top:6px}
+.track{height:7px;background:var(--line);border-radius:99px;margin-top:8px;overflow:hidden}
+.fill{height:100%;border-radius:99px;transition:width .4s ease}
+.fill.gold{background:linear-gradient(90deg,#F5C64F,#FFDE8A)}
+.restpanel{margin-top:14px;padding:12px;background:#101626;border:1px solid var(--line);border-radius:12px}
+.resthead{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.restrow{display:flex;align-items:center;gap:9px;padding:6px 2px;font-size:13.5px}
+.restrow input[type=checkbox]{width:18px;height:18px;accent-color:#F5C64F;flex-shrink:0}
+.restrow .amt{margin-left:auto;color:var(--muted);font-weight:600;font-size:13px}
+.resttotal{display:flex;align-items:baseline;gap:8px;border-top:1px solid var(--line);
+  margin-top:6px;padding-top:10px;font-size:13.5px;color:var(--muted)}
+.resttotal .amt{margin-left:auto;color:var(--red);font-weight:800;font-family:var(--display);font-size:20px}
+.tabs{display:flex;gap:8px;padding:12px 12px 0}
+.tabbtn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line2);background:var(--panel);
+  color:var(--muted);font-family:var(--display);font-weight:700;font-size:14.5px}
+.tabbtn.on{background:var(--gold);border-color:var(--gold);color:#161200}
+.filters{display:flex;gap:8px;padding:4px 12px 0;flex-wrap:wrap}
+.filters select{flex:1;min-width:140px;background:var(--panel);border:1px solid var(--line2);
+  border-radius:10px;color:var(--txt);font-size:13.5px;padding:10px;font-family:var(--body)}
+main{padding:6px 12px 0;display:flex;flex-direction:column;gap:10px}
+.serieshead{font-family:var(--display);font-weight:800;font-size:15px;color:var(--violet);
+  padding:10px 4px 0;letter-spacing:.02em}
+.set{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.set.done{border-color:#F5C64F55}
+.sethead{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:14px 14px 8px;background:none;border:none;color:inherit;font-family:var(--body);text-align:left}
+.code{font-family:var(--display);font-weight:700;font-size:12px;color:var(--bg);
+  background:var(--violet);border-radius:6px;padding:2px 7px;letter-spacing:.03em}
+.code.sv{background:#E4604F;color:#fff}
+.setname{font-family:var(--display);font-weight:700;font-size:16.5px;margin-top:4px}
+.setmeta{color:var(--muted);font-size:11.5px}
+.setrest{font-size:11.5px;color:var(--gold);margin-top:2px}
+.setrest.zero{color:var(--green)}
+.setcount{font-family:var(--display);font-weight:700;font-size:19px;color:var(--dim);text-align:right}
+.setcount.has{color:var(--gold)}
+.setcount small{color:var(--dim);font-size:14px}
+.toggletxt{color:var(--muted);font-size:11px;text-align:right}
+.constellation{display:flex;flex-wrap:wrap;gap:3px;padding:0 14px 12px}
+.constellation button{background:none;border:none;padding:1px;line-height:0}
+.rows{padding:0 12px 14px;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:10px;
+  border:1px solid var(--line);background:#141A2A}
+.row.owned{background:#1C2438}
+.row .starbtn{background:none;border:none;padding:2px;line-height:0;flex-shrink:0}
+.thumb{width:34px;height:47px;border-radius:5px;object-fit:cover;flex-shrink:0;
+  background:linear-gradient(160deg,#1A2136,#10162A);border:1px solid var(--line)}
+.thumb.hide{display:none}
+.cardinfo{flex:1;min-width:0;background:none;border:none;color:inherit;text-align:left;
+  font-family:var(--body);padding:0;display:flex;align-items:center;gap:8px}
+.cardtext{min-width:0;flex:1}
+.cardname{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cardmeta{font-size:11.5px;color:var(--dim)}
+.cardmeta b{color:var(--muted);font-weight:600}
+input{background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--txt);
+  font-size:13.5px;padding:7px 8px;font-family:var(--body)}
+input::placeholder{color:#4A5268}
+input:focus{outline:2px solid #F5C64F44;outline-offset:1px}
+.price{width:60px;text-align:right;flex-shrink:0}
+.nameedit{flex:1;min-width:0}
+.add{background:none;border:1px dashed var(--line2);border-radius:10px;color:var(--muted);
+  font-size:13.5px;padding:10px;font-family:var(--body);margin-top:2px;width:100%}
+.loadbtn{background:#101626;border:1px solid var(--line2);border-radius:10px;color:var(--gold);
+  font-size:13.5px;font-weight:600;padding:11px;font-family:var(--body);width:100%}
+.loadbtn:disabled{opacity:.55}
+.reset{border-color:#3A2530;color:var(--red);margin:8px 0 0}
+.clearset{color:var(--red);border-color:#3A2530}
+.cntpill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:99px;padding:3px 8px;
+  border:1px solid var(--line2);color:var(--dim);margin-bottom:4px}
+.cntpill.on{color:#161200;background:var(--gold);border-color:var(--gold)}
+.set.off{opacity:.55}
+.footnote{color:var(--muted);font-size:11.5px;text-align:center;margin:10px 0 0;padding:0 14px}
+button{cursor:pointer}
+svg path{transition:all .25s ease}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+.muted{color:var(--muted)}
+.overlay{position:fixed;inset:0;background:rgba(8,11,20,.86);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;z-index:50;padding:14px;
+  padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+.overlay[hidden]{display:none}
+.modal{width:100%;max-width:390px;background:var(--panel);border:1px solid var(--line);
+  border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:11px;touch-action:pan-y}
+.mtop{display:flex;align-items:center;gap:10px;min-width:0}
+.mstar{background:none;border:none;padding:2px;line-height:0;flex-shrink:0}
+.mtitles{min-width:0;flex:1}
+.mtitle{font-family:var(--display);font-weight:700;font-size:17px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.mmeta{color:var(--muted);font-size:12.5px;margin-top:1px}
+.mownedtag{font-size:11px;font-weight:600;color:var(--green);flex-shrink:0}
+.imgzone{position:relative;display:flex;align-items:center}
+.imgwrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:230px;
+  background:var(--bg);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.imgwrap img{max-width:100%;max-height:58vh;display:block;border-radius:10px}
+.imgstate{color:var(--muted);font-size:13px;text-align:center;padding:26px 14px;line-height:1.5}
+.imgstate a{color:var(--gold)}
+.nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:52px;
+  display:flex;align-items:center;justify-content:center;background:rgba(21,27,44,.85);
+  border:1px solid var(--line2);color:var(--txt);font-size:19px;border-radius:10px;z-index:2}
+.nav.prev{left:6px}.nav.next{right:6px}
+.nav:disabled{opacity:.25}
+.mcounter{text-align:center;color:var(--dim);font-size:11.5px}
+.btnrow{display:flex;gap:8px}
+.btn{flex:1;padding:12px 10px;border-radius:12px;font-family:var(--body);font-size:14px;
+  font-weight:600;text-align:center;text-decoration:none;border:1px solid var(--line2);
+  color:var(--txt);background:none;display:block}
+.btn.buy{background:var(--gold);border-color:var(--gold);color:#161200}
+.spinner{width:26px;height:26px;border:3px solid var(--line2);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Pokémon TCG · FR</div>
+  <h1>La chasse aux <em>étoiles jaunes</em></h1>
+  <p class="sub">Master sets AR — Méga-Évolution &amp; Écarlate et Violet.</p>
+</header>
+
+<div class="tabs">
+  <button class="tabbtn" id="tabAR">⭐ Collection AR</button>
+  <button class="tabbtn" id="tabSAR">✨ Collection SAR</button>
+</div>
+
+<section class="dash">
+  <div class="bigline">
+    <span class="bignum" id="ownedNum">0</span>
+    <span class="muted" style="font-size:15px" id="totalTxt">/ 0 AR · 0%</span>
+    <span class="saved" id="savedFlash">✓ sauvegardé</span>
+  </div>
+  <div class="track"><div class="fill gold" id="progFill" style="width:0%"></div></div>
+  <div class="scopenote" id="scopeNote"></div>
+  <div class="valueline">
+    <span class="lbl">💎 Valeur de ta collection (cote)</span>
+    <span class="val" id="collValue">0,00 €</span>
+  </div>
+  <div class="spentline">
+    <span class="lbl">Dépensé au total</span>
+    <span class="val" id="spentTxt">0,00 €</span>
+  </div>
+  <div class="refreshrow">
+    <button class="refreshbtn" id="refreshBtn">↻ Actualiser les cotes (Cardmarket via TCGdex)</button>
+  </div>
+  <div class="refreshstatus" id="refreshStatus"></div>
+  <div class="restpanel">
+    <div class="resthead">Séries comptées (compteur + reste à acquérir)</div>
+    <div id="restRows"></div>
+    <div class="resttotal"><span>Total sélection</span><span class="amt" id="restTotal">0,00 €</span></div>
+  </div>
+</section>
+
+<div class="filters">
+  <select id="filterSeries" aria-label="Filtrer par série"></select>
+  <select id="filterSet" aria-label="Filtrer par set"></select>
+</div>
+
+<main id="sets"></main>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" id="modalBox" role="dialog" aria-modal="true">
+    <div class="mtop">
+      <button class="mstar" id="mStar" aria-label="Acquise / non acquise"></button>
+      <div class="mtitles">
+        <div class="mtitle" id="mName"></div>
+        <div class="mmeta" id="mMeta"></div>
+      </div>
+      <span class="mownedtag" id="mOwned"></span>
+    </div>
+    <div class="imgzone">
+      <button class="nav prev" id="mPrev" aria-label="Carte précédente">‹</button>
+      <div class="imgwrap" id="mImg"><div class="spinner"></div></div>
+      <button class="nav next" id="mNext" aria-label="Carte suivante">›</button>
+    </div>
+    <div class="mcounter" id="mCounter"></div>
+    <div class="btnrow">
+      <button class="btn" id="mClose">Fermer</button>
+      <a class="btn buy" id="mBuy" target="_blank" rel="noopener">Acheter · Cardmarket</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY='ar-mega-tracker-v2';
+const MEG_DATA=[
+ {id:'ME01',name:'Méga-Évolution',date:'10/10/2025',note:'22 AR · n°133-154',cards:[
+  ['133','Bulbizarre',29.89],['134','Herbizarre',20.66],['135','Noadkoko',3.13],['136','Caratroc',3.25],
+  ['137','Ninjask',3.22],['138','Goupix',21.58],['139','Hélionceau',3.30],['140','Blizzi',2.63],
+  ['141','Gamblast',1.97],['142','Lézargus',2.90],['143','Galvaran',3.15],['144','Munja',2.57],
+  ['145','Tomberro',2.47],['146','Marshadow',17.49],['147','Gigansel',1.53],['148','Spiritomb',16.73],
+  ['149','Gribouraigne',2.06],['150','Steelix',9.04],['151','Piafabec',5.48],['152','Cadoizo',2.79],
+  ['153','Argouste',3.12],['154','Nounourson',3.85]]},
+ {id:'ME02',name:'Flammes Fantasmagoriques',date:'14/11/2025',note:'13 AR · n°95-107',cards:[
+  ['095','Ludicolo',1.95],['096','Lilliterelle',1.32],['097','Lamantine',4.93],['098','Tiplouf',13.78],
+  ['099','Voltoutou',1.89],['100','Zacian',3.41],['101','Libégon',3.54],['102','Axoloto de Paldea',2.98],
+  ['103','Salarsen',1.78],['104','Togedemaru',1.74],['105','Grodoudou',5.35],['106','Miaouss',25.34],
+  ['107','Capidextre',1.96]]},
+ {id:'ME2.5',name:'Héros Transcendants',date:'30/01/2026',note:'33 AR · n°218-250',cards:[
+  ['218','Saquedeneu d\u2019Erika',18.02],['219','Charmillon',5.13],['220','Papinox',3.33],['221','Rozbouton',6.51],
+  ['222','Volcaropod de Luth',6.58],['223','Chamallot',4.23],['224','Malamandre',3.52],['225','Flambino',8.19],
+  ['226','Psykokwak',64.52],['227','Stalgamin',null],['228','Dimoret',6.23],['229','Iguolta',2.10],
+  ['230','Lucanon',2.45],['231','Zapétrel de Mashynn',5.48],['232','Marill',8.71],['233','Feuforêve',3.99],
+  ['234','Branette',7.19],['235','Togekiss',4.21],['236','Cupcanaille',3.80],['237','Desséliande de Nabil',3.98],
+  ['238','Mimiqui de la Team Rocket',15.33],['239','Triopikeur de la Team Rocket',8.25],['240','Kapoera',4.21],
+  ['241','Charmina',3.55],['242','Strassie',3.82],['243','Grahyèna',6.54],['244','Spiritomb de Cynthia',81.13],
+  ['245','Ixon de Galar',3.26],['246','Mysdibule',5.69],['247','Fantyrm',6.34],['248','Dispareptil',6.68],
+  ['249','Étouraptor d\u2019Okuba',4.81],['250','Motisma Hélice',3.11]]},
+ {id:'ME03',name:'Équilibre Parfait',date:'27/03/2026',note:'11 AR · n°89-99',cards:[
+  ['089','Pérégrain',2.59],['090','Brindibou',5.65],['091','Flambusard',3.18],['092','Dragmara',4.16],
+  ['093','Dedenne',6.08],['094','Mélofée',24.25],['095','Psystigri',4.05],['096','Tarinorme',1.45],
+  ['097','Drascore',2.17],['098','Dimoclès',3.28],['099','Rattatac',4.43]]},
+ {id:'ME04',name:'Chaos Ascendant',date:'22/05/2026',note:'11 AR · n°87-97',cards:[
+  ['087','Marisson',5.76],['088','Grenousse',12.62],['089','Croâporal',10.53],['090','Pharamp',11.58],
+  ['091','Xerneas',11.07],['092','Kaorine',3.22],['093','Nostenfer',4.61],['094','Métang',3.58],
+  ['095','Colimucus',3.55],['096','Tauros',6.44],['097','Miradar',2.31]]},
+ {id:'ME05',name:'Nuit Noire',date:'17/07/2026',note:'sortie le 17/07 — charge la liste après',cards:[],slots:0},
+ {id:'MEP',name:'Promos Méga-Évolution',date:'2025-2026',note:'cartes promo — liste à charger',cards:[],slots:0,alts:['mep','promos mega','promo mega evolution']}
+];
+const SV_DATA=[
+ {id:'EV01',name:'Écarlate et Violet',date:'2023',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV02',name:'Évolutions à Paldea',date:'2023',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV03',name:'Flammes Obsidiennes',date:'2023',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV3.5',name:'151',date:'2023',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV04',name:'Faille Paradoxe',date:'2023',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV4.5',name:'Destinées de Paldea',date:'2024',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV05',name:'Forces Temporelles',date:'2024',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV06',name:'Mascarade Crépusculaire',date:'2024',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV6.5',name:'Fable Nébuleuse',date:'2024',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV07',name:'Couronne Stellaire',date:'2024',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV08',name:'Étincelles Déferlantes',date:'2024',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV8.5',name:'Évolutions Prismatiques',date:'2025',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV09',name:'Aventures Ensemble',date:'2025',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV10',name:'Rivalités Destinées',date:'2025',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EV10.5',name:'Foudre Noire · Flamme Blanche',date:'2025',note:'liste AR à charger',cards:[],slots:0},
+ {id:'EVP',name:'Promos Écarlate et Violet',date:'2023-2025',note:'cartes promo — liste à charger',cards:[],slots:0,alts:['svp','promos ecarlate et violet','promo ecarlate violet']}
+];
+function buildSet(s){
+ return {id:s.id,name:s.name,date:s.date,note:s.note,alts:s.alts||null,open:false,
+  cards:s.cards.length? s.cards.map(c=>({id:s.id+'-'+c[0],num:c[0],name:c[1],cote:c[2],owned:false,price:''}))
+  : Array.from({length:s.slots||0},(_,i)=>({id:s.id+'-slot'+(i+1),num:'',name:'',cote:null,owned:false,price:''}))};
+}
+function seedSeries(){
+ return [
+  {id:'MEG',name:'Bloc Méga-Évolution',counted:true,sets:MEG_DATA.map(buildSet)},
+  {id:'SV',name:'Bloc Écarlate et Violet',counted:true,sets:SV_DATA.map(buildSet)}
+ ];
+}
+function seed(){return {tab:'AR',lastPriceUpdate:null,filterSeries:'all',filterSet:'all',series:seedSeries()};}
+
+let state;
+try{const raw=localStorage.getItem(KEY);state=raw?JSON.parse(raw):seed();}catch(e){state=seed();}
+if(state&&state.sets&&!state.series){
+ state={lastPriceUpdate:state.lastPriceUpdate||null,filterSeries:'all',filterSet:'all',
+  series:[{id:'MEG',name:'Bloc Méga-Évolution',counted:true,sets:state.sets},
+          {id:'SV',name:'Bloc Écarlate et Violet',counted:true,sets:SV_DATA.map(buildSet)}]};
+}
+if(!state.series)state=seed();
+if(!state.filterSeries)state.filterSeries='all';
+if(!state.filterSet)state.filterSet='all';
+if(!state.tab)state.tab='AR';
+state.series.forEach(sr=>{if(typeof sr.counted!=='boolean')sr.counted=true;});
+state.series.forEach(sr=>sr.sets.forEach(s=>{
+ if(typeof s.counted!=='boolean')s.counted=true;
+ if(!Array.isArray(s.cardsSar))s.cardsSar=[];
+ /* Nettoyage : les anciens emplacements vides à remplir à la main laissent place au chargement auto */
+ if(s.cards.length&&s.cards.every(c=>!c.name&&!c.owned&&!c.price&&!c.num))s.cards=[];
+}));
+/* Collection active selon l'onglet : AR (étoile jaune) ou SAR (illustration spéciale) */
+function cardsOf(s){return state.tab==='SAR'?(s.cardsSar||(s.cardsSar=[])):s.cards;}
+/* Migration : garantir la présence des sets promo dans les anciennes sauvegardes */
+(function(){
+ const meg=state.series.find(sr=>sr.id==='MEG');
+ if(meg&&!meg.sets.some(s=>s.id==='MEP'))meg.sets.push(buildSet(MEG_DATA.find(s=>s.id==='MEP')));
+ const sv=state.series.find(sr=>sr.id==='SV');
+ if(sv&&!sv.sets.some(s=>s.id==='EVP'))sv.sets.push(buildSet(SV_DATA.find(s=>s.id==='EVP')));
+})();
+const allSets=()=>state.series.flatMap(sr=>sr.sets);
+const countedCards=()=>state.series.filter(sr=>sr.counted).flatMap(sr=>sr.sets).filter(s=>s.counted!==false).flatMap(s=>cardsOf(s));
+const valueCards=()=>allSets().filter(s=>s.counted!==false).flatMap(s=>cardsOf(s));
+const everyCard=()=>allSets().flatMap(s=>s.cards.concat(s.cardsSar||[]));
+
+let saveT=null;
+function persist(){
+ if(saveT)clearTimeout(saveT);
+ saveT=setTimeout(()=>{
+   try{localStorage.setItem(KEY,JSON.stringify(state));
+     const f=document.getElementById('savedFlash');f.classList.add('on');
+     setTimeout(()=>f.classList.remove('on'),1200);
+   }catch(e){console.error(e);}
+ },500);
+}
+function star(filled,size){
+ return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.85 5.77 6.37.93-4.61 4.49 1.09 6.34L12 17.14l-5.7 3 1.09-6.35-4.61-4.49 6.37-.93L12 2.6z" fill="${filled?'#F5C64F':'none'}" stroke="${filled?'#F5C64F':'#3A4258'}" stroke-width="1.6" stroke-linejoin="round" style="${filled?'filter:drop-shadow(0 0 5px rgba(245,198,79,.55))':''}"/></svg>`;
+}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+function eur(n){return n.toFixed(2).replace('.',',')+' €';}
+function buyUrl(name){return 'https://www.cardmarket.com/fr/Pokemon/Products/Search?searchString='+encodeURIComponent(name||'');}
+
+/* ── TCGdex ── */
+const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+async function tcgdexSets(){
+ let sets=null;
+ try{const c=JSON.parse(localStorage.getItem('tcgdx-sets')||'null');
+   if(c&&Date.now()-c.ts<6048e5)sets=c.sets;}catch(e){}
+ if(!sets){
+   const r=await fetch('https://api.tcgdex.net/v2/fr/sets');
+   if(!r.ok)throw new Error('api');
+   const full=await r.json();
+   sets=full.map(s=>({id:s.id,name:s.name}));
+   try{localStorage.setItem('tcgdx-sets',JSON.stringify({ts:Date.now(),sets}));}catch(e){}
+ }
+ return sets;
+}
+async function tcgdexResolveSet(setName,alts){
+ const sets=await tcgdexSets();
+ const cands=[setName].concat(alts||[]).filter(Boolean);
+ /* passe 1 : correspondance exacte sur le nom OU l'identifiant TCGdex (ex: 'svp','mep') */
+ for(const cand of cands){
+   const t=norm(cand);
+   const f=sets.find(s=>norm(s.name)===t||norm(s.id)===t);
+   if(f)return f;
+ }
+ /* passe 2 : le nom du set TCGdex contient le candidat */
+ for(const cand of cands){
+   const t=norm(cand);
+   const f=sets.find(s=>norm(s.name).includes(t));
+   if(f)return f;
+ }
+ /* passe 3 : le candidat contient le nom du set (ex: 'Foudre Noire · Flamme Blanche' → 'Foudre Noire').
+    Garde-fou : un candidat 'promo' ne doit jamais matcher un set non-promo (bug ME01) */
+ for(const cand of cands){
+   const t=norm(cand);
+   const f=sets.find(s=>{
+     const sn=norm(s.name);
+     if(!sn||!t.includes(sn))return false;
+     if(t.includes('promo')&&!sn.includes('promo'))return false;
+     return true;
+   });
+   if(f)return f;
+ }
+ return null;
+}
+async function tcgdexSetFull(setId,lang){
+ const r=await fetch('https://api.tcgdex.net/v2/'+(lang||'fr')+'/sets/'+setId);
+ if(!r.ok)throw new Error('api');
+ return await r.json();
+}
+async function tcgdexSetMeta(setId,lang){
+ lang=lang||'fr';
+ const ck='tcgdx-set4-'+lang+'-'+setId;
+ try{
+   const raw=JSON.parse(localStorage.getItem(ck)||'null');
+   if(raw&&raw.cards&&Date.now()-raw.ts<6048e5)return raw;
+ }catch(e){}
+ const d=await tcgdexSetFull(setId,lang);
+ const meta={ts:Date.now(),serie:(d.serie&&d.serie.id)||null,
+   cards:(d.cards||[]).map(c=>({l:c.localId,id:c.id,img:c.image||null}))};
+ try{localStorage.setItem(ck,JSON.stringify(meta));}catch(e){}
+ return meta;
+}
+async function tcgdexSetCards(setId,lang){return (await tcgdexSetMeta(setId,lang)).cards;}
+/* Set combiné : cartes FR, images EN carte par carte pour les manquantes, + id de série */
+const combinedCache={};
+async function tcgdexSetCombined(setId){
+ if(combinedCache[setId])return combinedCache[setId];
+ const frM=await tcgdexSetMeta(setId,'fr');
+ let cards=frM.cards,serie=frM.serie;
+ if(cards.some(c=>!c.img)){
+   try{
+     const enM=await tcgdexSetMeta(setId,'en');
+     serie=serie||enM.serie;
+     cards=cards.map(c=>{
+       if(c.img)return c;
+       const hit=enM.cards.find(e=>numKey(e.l)===numKey(c.l));
+       return hit&&hit.img?{...c,img:hit.img}:c;
+     });
+   }catch(e){}
+ }
+ const out={serie,cards};
+ combinedCache[setId]=out;
+ return out;
+}
+/* URL finale : base TCGdex (qualité ajoutée) ou URL directe collée par l'utilisateur */
+function imgUrl(base,quality){
+ return /\.(png|jpe?g|webp|gif)(\?|$)/i.test(base)?base:base+'/'+quality+'.webp';
+}
+/* URLs construites : schéma d'assets TCGdex + images officielles pokemon.com */
+function candidateBases(setCode,setId,serie,localId){
+ const out=[];
+ const n=parseInt(localId,10);
+ const pid=setId?String(setId).toLowerCase():null;
+ let codeOff=null;
+ /* 1. PkmnCards : vrais scans uniquement, 404 franc si absent — jamais de dos de carte */
+ if(setCode&&!isNaN(n)){
+   const code=String(setCode).toUpperCase().replace(/[^A-Z0-9]/g,'');
+   const OFF={'MEP':'MEBSP','EVP':'SVP'};
+   codeOff=OFF[code]||code;
+   const pad=String(n).padStart(3,'0');
+   out.push('https://pkmncards.com/wp-content/uploads/'+codeOff.toLowerCase()+'_en_'+pad+'_std.jpg');
+   out.push('https://pkmncards.com/wp-content/uploads/'+codeOff.toLowerCase()+'_en_'+pad+'_std.png');
+ }
+ /* 2. pokemontcg.io : bonne couverture, mais peut refléter les dos de pokemon.com */
+ if(pid&&!isNaN(n)){
+   out.push('https://images.pokemontcg.io/'+pid+'/'+n+'.png');
+   const alt=pid.replace(/0(\d)/,'$1').replace(/\./g,'pt');
+   if(alt!==pid)out.push('https://images.pokemontcg.io/'+alt+'/'+n+'.png');
+ }
+ /* 3. pokemon.com officiel : sert un dos de carte pour les scans manquants → repli assumé */
+ if(codeOff){
+   const code=String(setCode).toUpperCase().replace(/[^A-Z0-9]/g,'');
+   out.push('https://assets.pokemon.com/assets/cms2/img/cards/web/'+codeOff+'/'+codeOff+'_FR_'+n+'.png');
+   out.push('https://assets.pokemon.com/assets/cms2/img/cards/web/'+codeOff+'/'+codeOff+'_EN_'+n+'.png');
+   if(codeOff!==code){
+     out.push('https://assets.pokemon.com/assets/cms2/img/cards/web/'+code+'/'+code+'_EN_'+n+'.png');
+   }
+ }
+ /* 4. Schéma d'assets TCGdex (page d'aide HTML si absent → ignorée par <img>) */
+ if(serie&&setId&&localId!==undefined&&localId!==null&&localId!==''){
+   out.push('https://assets.tcgdex.net/fr/'+serie+'/'+setId+'/'+localId);
+   out.push('https://assets.tcgdex.net/en/'+serie+'/'+setId+'/'+localId);
+ }
+ return out;
+}
+/* Essaie une liste d'URLs sur un <img> jusqu'à la première qui charge */
+function trySrcs(el,urls){
+ let i=0;
+ el.referrerPolicy='no-referrer';
+ const next=()=>{
+   if(i>=urls.length){el.onerror=null;el.removeAttribute('src');return;}
+   el.onerror=next;
+   el.src=urls[i++];
+ };
+ next();
+}
+async function findCardCandidates(set,num,card){
+ const bases=[];
+ if(card&&card.img)bases.push(card.img);
+ try{
+   const found=set.tcgdexId?{id:set.tcgdexId}:await tcgdexResolveSet(set.name,set.alts);
+   if(found){
+     set.tcgdexId=set.tcgdexId||found.id;
+     const comb=await tcgdexSetCombined(found.id);
+     const hit=comb.cards.find(x=>numKey(x.l)===numKey(num));
+     if(hit&&hit.img&&bases.indexOf(hit.img)<0)bases.push(hit.img);
+     candidateBases(set.id,set.tcgdexId,comb.serie,hit?hit.l:num).forEach(b=>{if(bases.indexOf(b)<0)bases.push(b);});
+   }
+ }catch(e){}
+ const urls=[];
+ bases.forEach(b=>{
+   const hi=imgUrl(b,'high'),lo=imgUrl(b,'low');
+   if(urls.indexOf(hi)<0)urls.push(hi);
+   if(urls.indexOf(lo)<0)urls.push(lo);
+ });
+ return urls;
+}
+/* Numéros promo parfois non numériques ('SVP123', '2025-006') : clé de comparaison tolérante */
+function numKey(x){const n=parseInt(x,10);return isNaN(n)?String(x||'').trim().toLowerCase():n;}
+
+/* ── Miniatures ── */
+const thumbCache={};
+async function hydrateThumbs(){
+ const imgs=document.querySelectorAll('img.thumb[data-set][data-num]');
+ const bySets={};
+ imgs.forEach(el=>{const s=el.dataset.set;(bySets[s]=bySets[s]||[]).push(el);});
+ for(const setId in bySets){
+   const set=allSets().find(x=>x.id===setId);
+   if(!set)continue;
+   try{
+     if(!thumbCache[setId]){
+       const resolved=set.tcgdexId?{id:set.tcgdexId}:await tcgdexResolveSet(set.name,set.alts);
+       if(!resolved){thumbCache[setId]='none';continue;}
+       set.tcgdexId=set.tcgdexId||resolved.id;
+       thumbCache[setId]=await tcgdexSetCombined(resolved.id);
+     }
+     if(thumbCache[setId]==='none')continue;
+     const comb=thumbCache[setId];
+     bySets[setId].forEach(el=>{
+       const stCard=cardsOf(set).find(c=>numKey(c.num)===numKey(el.dataset.num));
+       const hit=comb.cards.find(x=>numKey(x.l)===numKey(el.dataset.num));
+       const bases=[];
+       if(stCard&&stCard.img)bases.push(stCard.img);
+       if(hit&&hit.img&&bases.indexOf(hit.img)<0)bases.push(hit.img);
+       candidateBases(set.id,set.tcgdexId,comb.serie,hit?hit.l:el.dataset.num).forEach(b=>{if(bases.indexOf(b)<0)bases.push(b);});
+       const urls=bases.map(b=>imgUrl(b,'low')).filter((u,i,a)=>a.indexOf(u)===i);
+       if(urls.length)trySrcs(el,urls);
+     });
+   }catch(e){}
+ }
+}
+
+/* ── Prix ── */
+function pickPrice(pr){
+ if(!pr||typeof pr!=='object')return null;
+ const cm=pr.cardmarket||pr.Cardmarket||null;
+ if(!cm||typeof cm!=='object')return null;
+ const keys=['trend','trendPrice','avg7','avg30','avg','avg1','low','lowPrice'];
+ for(const k of keys){const v=cm[k];if(typeof v==='number'&&v>0)return v;}
+ for(const k in cm){const v=cm[k];if(typeof v==='number'&&v>0)return v;}
+ return null;
+}
+function isARRarity(r){
+ if(!r||typeof r!=='string')return false;
+ const n=norm(r);
+ return n.includes('illustration')&&!n.includes('special');
+}
+function isSARRarity(r){
+ if(!r||typeof r!=='string')return false;
+ const n=norm(r);
+ return n.includes('illustration')&&n.includes('special');
+}
+
+/* ── Chargement automatique des AR d'un set vide ── */
+const ANALYSIS={};
+function mergeFound(set,found){
+ const target=cardsOf(set);
+ const sortKey=x=>{const n=parseInt(x,10);return isNaN(n)?1e9:n;};
+ const sorted=found.slice().sort((a,b)=>sortKey(a.num)-sortKey(b.num)||String(a.num).localeCompare(String(b.num)));
+ const existingNums=new Set(target.filter(c=>c.num).map(c=>numKey(c.num)));
+ const merged=target.filter(c=>c.name||c.owned||c.price);
+ sorted.forEach(f=>{
+   if(!existingNums.has(numKey(f.num)))
+     merged.push({id:set.id+'-'+(state.tab==='SAR'?'sar-':'')+f.num,num:f.num,name:f.name,img:f.img||null,
+       cote:(f.cote!==null&&f.cote!==undefined)?Math.round(f.cote*100)/100:null,owned:false,price:''});
+ });
+ merged.sort((a,b)=>sortKey(a.num||'0')-sortKey(b.num||'0')||String(a.num).localeCompare(String(b.num)));
+ const noteTxt=merged.length+' cartes · '+merged.filter(c=>c.img).length+' images référencées';
+ if(state.tab==='SAR'){set.cardsSar=merged;set.noteSar=noteTxt;}
+ else{set.cards=merged;set.note=noteTxt;}
+ persist();render();
+}
+async function loadSetAR(set,statusEl,btnEl){
+ btnEl.disabled=true;
+ try{
+   statusEl.textContent='Recherche du set sur TCGdex…';
+   const resolved=set.tcgdexId?{id:set.tcgdexId,name:set.name}:await tcgdexResolveSet(set.name,set.alts);
+   if(!resolved){statusEl.textContent='Set introuvable sur TCGdex (pas encore référencé ?) — réessaie plus tard ou ajoute à la main.';btnEl.disabled=false;return;}
+   set.tcgdexId=resolved.id;
+   statusEl.textContent='Set TCGdex trouvé : '+(resolved.name||resolved.id)+' — récupération…';
+   const full=await tcgdexSetFull(resolved.id);
+   const official=(full.cardCount&&full.cardCount.official)||0;
+   const briefs=(full.cards||[]);
+   const secrets=briefs.filter(c=>parseInt(c.localId,10)>official);
+   const pool=secrets.length?secrets:briefs;
+   statusEl.textContent='Analyse de '+pool.length+' cartes…'+(pool.length>120?' (set volumineux, patience)':'');
+   const analysis=[];
+   const CHUNK=6;let done=0;
+   for(let i=0;i<pool.length;i+=CHUNK){
+     const batch=pool.slice(i,i+CHUNK);
+     await Promise.all(batch.map(async b=>{
+       try{
+         const r=await fetch('https://api.tcgdex.net/v2/fr/cards/'+b.id);
+         if(!r.ok)throw new Error();
+         const d=await r.json();
+         let img=d.image||null;
+         if(!img){
+           try{
+             const r2=await fetch('https://api.tcgdex.net/v2/en/cards/'+b.id);
+             if(r2.ok){const d2=await r2.json();if(d2.image)img=d2.image;}
+           }catch(e2){}
+         }
+         analysis.push({num:String(b.localId),name:d.name||b.name||'?',
+           cote:pickPrice(d.pricing),rarity:d.rarity||'?',img:img});
+       }catch(e){}
+       done++;
+     }));
+     statusEl.textContent='Analyse… '+done+'/'+pool.length;
+   }
+   const found=analysis.filter(a=>(state.tab==='SAR'?isSARRarity:isARRarity)(a.rarity));
+   if(!found.length){
+     const groups={};
+     analysis.forEach(a=>{const k=a.rarity||'?';(groups[k]=groups[k]||[]).push(a);});
+     const keys=Object.keys(groups).filter(k=>k!=='?');
+     if(!keys.length){
+       statusEl.textContent='Aucune carte analysable pour ce set — réessaie plus tard.';
+       btnEl.disabled=false;return;
+     }
+     ANALYSIS[set.id]=groups;
+     statusEl.innerHTML='Pas de rareté \u00ab '+(state.tab==='SAR'?'Illustration spéciale rare':'Illustration rare')+' \u00bb dans ce set (sets spéciaux = étiquettes différentes). Choisis quoi charger :'+
+       keys.map(k=>`<button class="add" style="margin-top:6px" data-a="loadrar" data-r="${esc(k)}">Charger : ${esc(k)} (${groups[k].length} cartes)</button>`).join('');
+     btnEl.disabled=false;return;
+   }
+   mergeFound(set,found);
+ }catch(e){
+   statusEl.textContent='Échec (hors ligne ?) — réessaie.';
+   btnEl.disabled=false;
+ }
+}
+
+/* ── Actualisation des cotes ── */
+let refreshing=false;
+async function refreshPrices(){
+ if(refreshing)return;
+ refreshing=true;
+ const btn=document.getElementById('refreshBtn');
+ const status=document.getElementById('refreshStatus');
+ btn.disabled=true;
+ let done=0,updated=0,failed=0;
+ const targets=[];
+ try{
+   for(const set of allSets()){
+     const named=set.cards.concat(set.cardsSar||[]).filter(c=>c.name&&c.num);
+     if(!named.length)continue;
+     status.textContent='Résolution du set '+set.id+'…';
+     let resolved=null,cards=null;
+     try{
+       resolved=set.tcgdexId?{id:set.tcgdexId}:await tcgdexResolveSet(set.name,set.alts);
+       if(resolved)cards=await tcgdexSetCards(resolved.id);
+     }catch(e){}
+     if(!resolved||!cards){failed+=named.length;continue;}
+     for(const c of named){
+       const hit=cards.find(x=>numKey(x.l)===numKey(c.num));
+       if(hit&&hit.id)targets.push({card:c,tid:hit.id});
+       else failed++;
+     }
+   }
+   const total=targets.length;
+   const CHUNK=6;
+   for(let i=0;i<targets.length;i+=CHUNK){
+     const batch=targets.slice(i,i+CHUNK);
+     await Promise.all(batch.map(async t=>{
+       try{
+         const r=await fetch('https://api.tcgdex.net/v2/fr/cards/'+t.tid);
+         if(!r.ok)throw new Error();
+         const d=await r.json();
+         const p=pickPrice(d.pricing);
+         if(d.image&&!t.card.img)t.card.img=d.image;
+         else if(!d.image&&!t.card.img){
+           try{
+             const r2=await fetch('https://api.tcgdex.net/v2/en/cards/'+t.tid);
+             if(r2.ok){const d2=await r2.json();if(d2.image)t.card.img=d2.image;}
+           }catch(e2){}
+         }
+         if(p!==null){t.card.cote=Math.round(p*100)/100;updated++;}
+         else failed++;
+       }catch(e){failed++;}
+       done++;
+     }));
+     status.textContent='Actualisation… '+done+'/'+total;
+   }
+   state.lastPriceUpdate=Date.now();
+   persist();render();
+   status.textContent=updated>0
+     ? '✓ '+updated+' cotes mises à jour'+(failed?' · '+failed+' indisponibles':'')+' — '+new Date().toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+     : 'Aucun prix disponible via l\u2019API — anciennes cotes conservées.';
+ }catch(e){
+   status.textContent='Échec de l\u2019actualisation (hors ligne ?) — anciennes cotes conservées.';
+ }
+ btn.disabled=false;
+ refreshing=false;
+}
+document.getElementById('refreshBtn').onclick=refreshPrices;
+
+/* ── Modal ── */
+const overlay=document.getElementById('overlay');
+const mImg=document.getElementById('mImg');
+let mSet=null,mIdx=-1,mToken=0;
+function closeModal(){overlay.hidden=true;mImg.innerHTML='';mSet=null;mIdx=-1;}
+document.getElementById('mClose').onclick=closeModal;
+overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal();});
+document.getElementById('mPrev').onclick=()=>nav(-1);
+document.getElementById('mNext').onclick=()=>nav(1);
+document.getElementById('mStar').onclick=()=>{
+ if(!mSet)return;
+ const c=cardsOf(mSet)[mIdx];
+ c.owned=!c.owned;
+ persist();render();updateModalHeader();
+};
+function nav(d){
+ if(!mSet)return;
+ const viewable=i=>cardsOf(mSet)[i]&&cardsOf(mSet)[i].name;
+ let i=mIdx+d;
+ while(i>=0&&i<cardsOf(mSet).length&&!viewable(i))i+=d;
+ if(i>=0&&i<cardsOf(mSet).length)showCard(i);
+}
+let tX=null,tY=null;
+const modalBox=document.getElementById('modalBox');
+modalBox.addEventListener('touchstart',e=>{tX=e.touches[0].clientX;tY=e.touches[0].clientY;},{passive:true});
+modalBox.addEventListener('touchend',e=>{
+ if(tX===null)return;
+ const dx=e.changedTouches[0].clientX-tX, dy=e.changedTouches[0].clientY-tY;
+ tX=tY=null;
+ if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.4) nav(dx<0?1:-1);
+},{passive:true});
+document.addEventListener('keydown',e=>{
+ if(overlay.hidden)return;
+ if(e.key==='ArrowRight')nav(1);
+ else if(e.key==='ArrowLeft')nav(-1);
+ else if(e.key==='Escape')closeModal();
+});
+function updateModalHeader(){
+ const c=cardsOf(mSet)[mIdx];
+ document.getElementById('mStar').innerHTML=star(c.owned,30);
+ document.getElementById('mOwned').textContent=c.owned?'✓ acquise':'';
+ document.getElementById('mName').textContent=c.name||'Carte AR';
+ document.getElementById('mMeta').textContent=mSet.id+' · n°'+c.num+
+   (typeof c.cote==='number'?' · cote ≈ '+eur(c.cote):'');
+ const viewables=cardsOf(mSet).filter(x=>x.name);
+ const pos=viewables.indexOf(c);
+ document.getElementById('mCounter').textContent=(pos+1)+' / '+viewables.length+' — swipe ‹ › pour naviguer';
+ document.getElementById('mPrev').disabled=(pos<=0);
+ document.getElementById('mNext').disabled=(pos>=viewables.length-1);
+ document.getElementById('mBuy').href=buyUrl(c.name);
+}
+async function showCard(idx){
+ mIdx=idx;
+ const c=cardsOf(mSet)[idx];
+ updateModalHeader();
+ mImg.innerHTML='<div class="spinner"></div>';
+ overlay.hidden=false;
+ const token=++mToken;
+ try{
+   const urls=await findCardCandidates(mSet,c.num,c);
+   if(token!==mToken||overlay.hidden)return;
+   if(urls.length){
+     const img=new Image();
+     img.alt=c.name;
+     img.referrerPolicy='no-referrer';
+     let i=0;
+     img.onload=()=>{if(token===mToken&&!overlay.hidden){mImg.innerHTML='';mImg.appendChild(img);}};
+     img.onerror=()=>{
+       if(token!==mToken)return;
+       if(i<urls.length)img.src=urls[i++];
+       else showImgFallback(c,urls);
+     };
+     img.src=urls[i++];
+   }else showImgFallback(c,[]);
+ }catch(e){if(token===mToken)showImgFallback(c,[]);}
+}
+function showImgFallback(c,tried){
+ if(overlay.hidden)return;
+ const g='https://www.google.com/search?tbm=isch&q='+encodeURIComponent((c.name||'')+' '+(c.num||'')+' '+mSet.id+' pokemon carte');
+ const diag=(tried&&tried.length)?('<details style="margin-top:8px;text-align:left"><summary style="font-size:11px;color:#5A6378">Diagnostic : '+tried.length+' URLs testées (tape pour ouvrir)</summary>'+tried.map(u=>'<a style="display:block;font-size:10px;word-break:break-all;margin-top:4px" href="'+u+'" target="_blank" rel="noopener">'+u+'</a>').join('')+'</details>'):'';
+ mImg.innerHTML='<div class="imgstate">Image introuvable automatiquement.<br><a href="'+g+'" target="_blank" rel="noopener">Chercher sur Google Images →</a><br><br>Tu peux coller ici l\u2019URL d\u2019une image (appui long sur l\u2019image → copier le lien) :<br><input id="mUrl" style="width:100%;margin-top:6px" placeholder="https://…jpg / png / webp"><button class="add" id="mUrlSave" style="margin-top:8px">💾 Enregistrer cette image</button>'+diag+'</div>';
+ const save=mImg.querySelector('#mUrlSave');
+ save.onclick=()=>{
+   const v=mImg.querySelector('#mUrl').value.trim();
+   if(v){c.img=v;persist();render();showCard(mIdx);}
+ };
+}
+function openCard(set,c){mSet=set;showCard(cardsOf(set).indexOf(c));}
+
+/* ── Dashboard ── */
+function seriesRest(sr){
+ return sr.sets.filter(s=>s.counted!==false).flatMap(s=>cardsOf(s)).filter(c=>typeof c.cote==='number'&&!c.owned).reduce((t,c)=>t+c.cote,0);
+}
+function renderDash(){
+ const counted=countedCards();
+ const own=counted.filter(c=>c.owned);
+ const allOwn=valueCards().filter(c=>c.owned);
+ const spent=allOwn.reduce((t,c)=>t+(Number(c.price)||0),0);
+ const collValue=allOwn.reduce((t,c)=>t+(typeof c.cote==='number'?c.cote:0),0);
+ const pct=counted.length?Math.round(own.length/counted.length*100):0;
+ document.getElementById('ownedNum').textContent=own.length;
+ document.getElementById('totalTxt').textContent='/ '+counted.length+' '+state.tab+' · '+pct+'%';
+ document.getElementById('progFill').style.width=pct+'%';
+ const names=state.series.filter(sr=>sr.counted).map(sr=>sr.name.replace('Bloc ',''));
+ document.getElementById('scopeNote').textContent=
+   names.length?('Compteur : '+names.join(' + ')):'Compteur : aucune série cochée';
+ document.getElementById('collValue').textContent=eur(collValue);
+ document.getElementById('spentTxt').textContent=eur(spent);
+ const rr=document.getElementById('restRows');
+ rr.innerHTML='';
+ let totalRest=0;
+ state.series.forEach(sr=>{
+   const rest=seriesRest(sr);
+   if(sr.counted)totalRest+=rest;
+   const row=document.createElement('label');
+   row.className='restrow';
+   row.innerHTML=`<input type="checkbox" ${sr.counted?'checked':''}>
+     <span>${esc(sr.name)}</span><span class="amt">≈ ${eur(rest)}</span>`;
+   row.querySelector('input').addEventListener('change',e=>{
+     sr.counted=e.target.checked;persist();renderDash();
+   });
+   rr.appendChild(row);
+ });
+ document.getElementById('restTotal').textContent='≈ '+eur(totalRest);
+ const status=document.getElementById('refreshStatus');
+ if(!refreshing&&status.textContent===''&&state.lastPriceUpdate){
+   status.textContent='Dernière actualisation : '+new Date(state.lastPriceUpdate).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+ }
+}
+
+/* ── Filtres ── */
+function renderFilters(){
+ const fs=document.getElementById('filterSeries');
+ const ft=document.getElementById('filterSet');
+ fs.innerHTML='<option value="all">Toutes les séries</option>'+
+   state.series.map(sr=>`<option value="${esc(sr.id)}" ${state.filterSeries===sr.id?'selected':''}>${esc(sr.name)}</option>`).join('');
+ fs.value=state.filterSeries;
+ const pool=state.filterSeries==='all'?allSets():
+   (state.series.find(sr=>sr.id===state.filterSeries)||{sets:[]}).sets;
+ ft.innerHTML='<option value="all">Tous les sets</option>'+
+   pool.map(s=>`<option value="${esc(s.id)}" ${state.filterSet===s.id?'selected':''}>${esc(s.id)} — ${esc(s.name)}</option>`).join('');
+ if(!pool.some(s=>s.id===state.filterSet))state.filterSet='all';
+ ft.value=state.filterSet;
+ fs.onchange=()=>{state.filterSeries=fs.value;state.filterSet='all';persist();render();};
+ ft.onchange=()=>{state.filterSet=ft.value;persist();render();};
+}
+
+function render(){
+ renderTabs();
+ renderDash();
+ renderFilters();
+ const root=document.getElementById('sets');
+ root.innerHTML='';
+ state.series.forEach(sr=>{
+  if(state.filterSeries!=='all'&&state.filterSeries!==sr.id)return;
+  const visibleSets=sr.sets.filter(s=>state.filterSet==='all'||state.filterSet===s.id);
+  if(!visibleSets.length)return;
+  const h=document.createElement('div');
+  h.className='serieshead';
+  h.textContent=sr.name;
+  root.appendChild(h);
+  visibleSets.forEach(set=>{
+   const isSV=sr.id==='SV';
+   const cds=cardsOf(set);
+   const got=cds.filter(c=>c.owned).length;
+   const done=cds.length>0&&got===cds.length;
+   const restCote=cds.filter(c=>typeof c.cote==='number'&&!c.owned).reduce((t,c)=>t+c.cote,0);
+   const hasCotes=cds.some(c=>typeof c.cote==='number');
+   const el=document.createElement('section');
+   el.className='set'+(done?' done':'')+(set.counted===false?' off':'');
+   const restTxt=hasCotes
+     ? (restCote>0?'Pour compléter : ≈ '+eur(restCote):'Série complète ! 🎉')
+     : '';
+   const rowsHtml=cds.map((c,i)=>{
+     const coteTxt=(typeof c.cote==='number')?('cote ≈ <b>'+eur(c.cote)+'</b>'):'cote n.c.';
+     const nameBlock=c.name
+       ? `<button class="cardinfo" data-a="view" data-c="${c.id}">
+           <img class="thumb" data-set="${esc(set.id)}" data-num="${esc(c.num)}" alt="" loading="lazy">
+           <div class="cardtext"><div class="cardname">${esc(c.name)}</div><div class="cardmeta">n°${esc(c.num)} · ${coteTxt}</div></div>
+          </button>`
+       : `<input class="nameedit" data-f="name" data-c="${c.id}" value="${esc(c.name)}" placeholder="AR ${i+1} — nom">`;
+     return `<div class="row${c.owned?' owned':''}">
+       <button class="starbtn" data-a="star" data-c="${c.id}" aria-label="basculer">${star(c.owned,22)}</button>
+       ${nameBlock}
+       <input class="price" type="number" inputmode="decimal" data-f="price" data-c="${c.id}" value="${esc(c.price)}" placeholder="payé €">
+     </div>`;
+   }).join('');
+   const loader=`<button class="loadbtn" data-a="loadar">⤓ Charger la liste ${state.tab} automatiquement (TCGdex)</button>
+     <p class="footnote" style="text-align:left;margin:6px 0 0" data-role="loadstatus"></p>`;
+   el.innerHTML=`
+    <button class="sethead" data-a="toggle" aria-expanded="${set.open}">
+     <div style="min-width:0">
+       <div style="display:flex;align-items:center;gap:8px"><span class="code${isSV?' sv':''}">${esc(set.id)}</span>${done?star(true,15):''}</div>
+       <div class="setname">${esc(set.name)}</div>
+       <div class="setmeta">${esc(set.date)} · ${esc(state.tab==='SAR'?(set.noteSar||'SAR — liste à charger'):set.note)}</div>
+       ${restTxt?`<div class="setrest${restCote>0?'':' zero'}">${restTxt}</div>`:''}
+     </div>
+     <div style="flex-shrink:0;text-align:right">
+       <span class="cntpill${set.counted!==false?' on':''}" role="button" data-a="cnt">${set.counted!==false?'✓ compté':'✗ ignoré'}</span>
+       <div class="setcount${got?' has':''}">${got}<small>/${cds.length}</small></div>
+       <div class="toggletxt">${set.open?'replier \u25b2':'d\u00e9plier \u25bc'}</div>
+     </div>
+    </button>
+    <div class="constellation">${cds.map(c=>`<button data-a="star" data-c="${c.id}" title="${esc(c.name||'?')}" aria-label="basculer">${star(c.owned,17)}</button>`).join('')}</div>
+    ${set.open?`<div class="rows">${rowsHtml}
+      ${cds.filter(c=>c.name).length===0?loader:''}
+      <button class="add" data-a="add">+ Ajouter une AR</button>
+      ${cds.length?`<button class="add clearset" data-a="clearset">🗑 Vider ce set (pour recharger)</button>`:''}
+    </div>`:''}`;
+   el.addEventListener('click',ev=>{
+     const b=ev.target.closest('[data-a]');if(!b)return;
+     const a=b.dataset.a;
+     if(a==='toggle'){set.open=!set.open;persist();render();}
+     else if(a==='star'){const c=cardsOf(set).find(x=>x.id===b.dataset.c);if(c){c.owned=!c.owned;persist();render();}}
+     else if(a==='view'){const c=cardsOf(set).find(x=>x.id===b.dataset.c);if(c)openCard(set,c);}
+     else if(a==='add'){cardsOf(set).push({id:set.id+'-x'+Date.now(),num:'',name:'',cote:null,owned:false,price:''});persist();render();}
+     else if(a==='cnt'){set.counted=(set.counted===false);persist();render();}
+     else if(a==='clearset'){
+       if(confirm('Vider toutes les cartes de '+set.id+' ? (étoiles et prix de ce set perdus, rechargement possible ensuite)')){
+         if(state.tab==='SAR'){set.cardsSar=[];set.noteSar='';}else{set.cards=[];set.note='liste à charger';}persist();render();
+       }
+     }
+     else if(a==='loadar'){
+       const st=el.querySelector('[data-role=loadstatus]');
+       loadSetAR(set,st,b);
+     }
+     else if(a==='loadrar'){
+       const groups=ANALYSIS[set.id]||{};
+       const list=groups[b.dataset.r]||[];
+       if(list.length)mergeFound(set,list);
+     }
+   });
+   el.addEventListener('input',ev=>{
+     const inp=ev.target.closest('[data-f]');if(!inp)return;
+     const c=cardsOf(set).find(x=>x.id===inp.dataset.c);if(!c)return;
+     c[inp.dataset.f]=inp.value;
+     persist();
+     if(inp.dataset.f==='price')renderDash();
+   });
+   root.appendChild(el);
+  });
+ });
+ const reset=document.createElement('button');
+ reset.className='add reset';
+ reset.textContent='R\u00e9initialiser tout le tracker';
+ reset.onclick=()=>{if(confirm('Tout effacer et recharger les listes d\u2019origine ?')){state=seed();persist();render();}};
+ root.appendChild(reset);
+ const note=document.createElement('p');
+ note.className='footnote';
+ note.textContent='\u00ab Charger la liste AR \u00bb identifie les Illustrations Rares d\u2019un set via TCGdex (rareté + nom + cote + image). Cotes indicatives \u2014 v\u00e9rifie avant achat.';
+ root.appendChild(note);
+ hydrateThumbs();
+}
+
+const tabAR=document.getElementById('tabAR');
+const tabSAR=document.getElementById('tabSAR');
+function renderTabs(){
+ tabAR.classList.toggle('on',state.tab!=='SAR');
+ tabSAR.classList.toggle('on',state.tab==='SAR');
+}
+tabAR.onclick=()=>{if(state.tab!=='AR'){state.tab='AR';persist();render();}};
+tabSAR.onclick=()=>{if(state.tab!=='SAR'){state.tab='SAR';persist();render();}};
+
+render();
+</script>
+</body>
+</html>
