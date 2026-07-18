@@ -161,8 +161,9 @@ svg path{transition:all .25s ease}
 </header>
 
 <div class="tabs">
-  <button class="tabbtn" id="tabAR">⭐ Collection AR</button>
-  <button class="tabbtn" id="tabSAR">✨ Collection SAR</button>
+  <button class="tabbtn" id="tabAR">⭐ AR</button>
+  <button class="tabbtn" id="tabSAR">✨ SAR</button>
+  <button class="tabbtn" id="tabMUR">🏆 MUR</button>
 </div>
 
 <section class="dash">
@@ -304,11 +305,16 @@ state.series.forEach(sr=>{if(typeof sr.counted!=='boolean')sr.counted=true;});
 state.series.forEach(sr=>sr.sets.forEach(s=>{
  if(typeof s.counted!=='boolean')s.counted=true;
  if(!Array.isArray(s.cardsSar))s.cardsSar=[];
+ if(!Array.isArray(s.cardsMur))s.cardsMur=[];
  /* Nettoyage : les anciens emplacements vides à remplir à la main laissent place au chargement auto */
  if(s.cards.length&&s.cards.every(c=>!c.name&&!c.owned&&!c.price&&!c.num))s.cards=[];
 }));
 /* Collection active selon l'onglet : AR (étoile jaune) ou SAR (illustration spéciale) */
-function cardsOf(s){return state.tab==='SAR'?(s.cardsSar||(s.cardsSar=[])):s.cards;}
+function cardsOf(s){
+ if(state.tab==='SAR')return s.cardsSar||(s.cardsSar=[]);
+ if(state.tab==='MUR')return s.cardsMur||(s.cardsMur=[]);
+ return s.cards;
+}
 /* Migration : garantir la présence des sets promo dans les anciennes sauvegardes */
 (function(){
  const meg=state.series.find(sr=>sr.id==='MEG');
@@ -319,7 +325,7 @@ function cardsOf(s){return state.tab==='SAR'?(s.cardsSar||(s.cardsSar=[])):s.car
 const allSets=()=>state.series.flatMap(sr=>sr.sets);
 const countedCards=()=>state.series.filter(sr=>sr.counted).flatMap(sr=>sr.sets).filter(s=>s.counted!==false).flatMap(s=>cardsOf(s));
 const valueCards=()=>allSets().filter(s=>s.counted!==false).flatMap(s=>cardsOf(s));
-const everyCard=()=>allSets().flatMap(s=>s.cards.concat(s.cardsSar||[]));
+const everyCard=()=>allSets().flatMap(s=>s.cards.concat(s.cardsSar||[],s.cardsMur||[]));
 
 let saveT=null;
 function persist(){
@@ -550,6 +556,11 @@ function isSARRarity(r){
  const n=norm(r);
  return n.includes('illustration')&&n.includes('special');
 }
+function isMURRarity(r){
+ if(!r||typeof r!=='string')return false;
+ const n=norm(r);
+ return n.includes('hyper')||n.includes('megaultra')||n.includes('gold')||n==='mur';
+}
 
 /* ── Chargement automatique des AR d'un set vide ── */
 const ANALYSIS={};
@@ -561,12 +572,13 @@ function mergeFound(set,found){
  const merged=target.filter(c=>c.name||c.owned||c.price);
  sorted.forEach(f=>{
    if(!existingNums.has(numKey(f.num)))
-     merged.push({id:set.id+'-'+(state.tab==='SAR'?'sar-':'')+f.num,num:f.num,name:f.name,img:f.img||null,
+     merged.push({id:set.id+'-'+(state.tab==='SAR'?'sar-':state.tab==='MUR'?'mur-':'')+f.num,num:f.num,name:f.name,img:f.img||null,
        cote:(f.cote!==null&&f.cote!==undefined)?Math.round(f.cote*100)/100:null,owned:false,price:''});
  });
  merged.sort((a,b)=>sortKey(a.num||'0')-sortKey(b.num||'0')||String(a.num).localeCompare(String(b.num)));
  const noteTxt=merged.length+' cartes · '+merged.filter(c=>c.img).length+' images référencées';
  if(state.tab==='SAR'){set.cardsSar=merged;set.noteSar=noteTxt;}
+ else if(state.tab==='MUR'){set.cardsMur=merged;set.noteMur=noteTxt;}
  else{set.cards=merged;set.note=noteTxt;}
  persist();render();
 }
@@ -607,7 +619,7 @@ async function loadSetAR(set,statusEl,btnEl){
      }));
      statusEl.textContent='Analyse… '+done+'/'+pool.length;
    }
-   const found=analysis.filter(a=>(state.tab==='SAR'?isSARRarity:isARRarity)(a.rarity));
+   const found=analysis.filter(a=>(state.tab==='MUR'?isMURRarity:state.tab==='SAR'?isSARRarity:isARRarity)(a.rarity));
    if(!found.length){
      const groups={};
      analysis.forEach(a=>{const k=a.rarity||'?';(groups[k]=groups[k]||[]).push(a);});
@@ -617,7 +629,7 @@ async function loadSetAR(set,statusEl,btnEl){
        btnEl.disabled=false;return;
      }
      ANALYSIS[set.id]=groups;
-     statusEl.innerHTML='Pas de rareté \u00ab '+(state.tab==='SAR'?'Illustration spéciale rare':'Illustration rare')+' \u00bb dans ce set (sets spéciaux = étiquettes différentes). Choisis quoi charger :'+
+     statusEl.innerHTML='Pas de rareté \u00ab '+(state.tab==='MUR'?'Hyper rare / Méga Ultra-Rare':state.tab==='SAR'?'Illustration spéciale rare':'Illustration rare')+' \u00bb dans ce set (sets spéciaux = étiquettes différentes). Choisis quoi charger :'+
        keys.map(k=>`<button class="add" style="margin-top:6px" data-a="loadrar" data-r="${esc(k)}">Charger : ${esc(k)} (${groups[k].length} cartes)</button>`).join('');
      btnEl.disabled=false;return;
    }
@@ -640,7 +652,7 @@ async function refreshPrices(){
  const targets=[];
  try{
    for(const set of allSets()){
-     const named=set.cards.concat(set.cardsSar||[]).filter(c=>c.name&&c.num);
+     const named=set.cards.concat(set.cardsSar||[],set.cardsMur||[]).filter(c=>c.name&&c.num);
      if(!named.length)continue;
      status.textContent='Résolution du set '+set.id+'…';
      let resolved=null,cards=null;
@@ -886,7 +898,7 @@ function render(){
      <div style="min-width:0">
        <div style="display:flex;align-items:center;gap:8px"><span class="code${isSV?' sv':''}">${esc(set.id)}</span>${done?star(true,15):''}</div>
        <div class="setname">${esc(set.name)}</div>
-       <div class="setmeta">${esc(set.date)} · ${esc(state.tab==='SAR'?(set.noteSar||'SAR — liste à charger'):set.note)}</div>
+       <div class="setmeta">${esc(set.date)} · ${esc(state.tab==='SAR'?(set.noteSar||'SAR — liste à charger'):state.tab==='MUR'?(set.noteMur||'MUR — liste à charger'):set.note)}</div>
        ${restTxt?`<div class="setrest${restCote>0?'':' zero'}">${restTxt}</div>`:''}
      </div>
      <div style="flex-shrink:0;text-align:right">
@@ -911,7 +923,7 @@ function render(){
      else if(a==='cnt'){set.counted=(set.counted===false);persist();render();}
      else if(a==='clearset'){
        if(confirm('Vider toutes les cartes de '+set.id+' ? (étoiles et prix de ce set perdus, rechargement possible ensuite)')){
-         if(state.tab==='SAR'){set.cardsSar=[];set.noteSar='';}else{set.cards=[];set.note='liste à charger';}persist();render();
+         if(state.tab==='SAR'){set.cardsSar=[];set.noteSar='';}else if(state.tab==='MUR'){set.cardsMur=[];set.noteMur='';}else{set.cards=[];set.note='liste à charger';}persist();render();
        }
      }
      else if(a==='loadar'){
@@ -948,12 +960,15 @@ function render(){
 
 const tabAR=document.getElementById('tabAR');
 const tabSAR=document.getElementById('tabSAR');
+const tabMUR=document.getElementById('tabMUR');
 function renderTabs(){
- tabAR.classList.toggle('on',state.tab!=='SAR');
+ tabAR.classList.toggle('on',state.tab==='AR');
  tabSAR.classList.toggle('on',state.tab==='SAR');
+ tabMUR.classList.toggle('on',state.tab==='MUR');
 }
 tabAR.onclick=()=>{if(state.tab!=='AR'){state.tab='AR';persist();render();}};
 tabSAR.onclick=()=>{if(state.tab!=='SAR'){state.tab='SAR';persist();render();}};
+tabMUR.onclick=()=>{if(state.tab!=='MUR'){state.tab='MUR';persist();render();}};
 
 render();
 </script>
