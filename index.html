@@ -113,6 +113,7 @@ input:focus{outline:2px solid #F5C64F44;outline-offset:1px}
   border:1px solid var(--line2);color:var(--dim);margin-bottom:4px}
 .cntpill.on{color:#161200;background:var(--gold);border-color:var(--gold)}
 .set.off{opacity:.55}
+.set.discover{border-style:dashed;border-color:var(--line2)}
 .footnote{color:var(--muted);font-size:11.5px;text-align:center;margin:10px 0 0;padding:0 14px}
 button{cursor:pointer}
 svg path{transition:all .25s ease}
@@ -851,6 +852,44 @@ function renderFilters(){
  ft.onchange=()=>{state.filterSet=ft.value;persist();render();};
 }
 
+const DISCOVER={};
+function addDiscoveredSet(sr,cand){
+ const code=String(cand.id).toUpperCase();
+ if(sr.sets.some(x=>x.id===code||x.tcgdexId===cand.id))return;
+ let idx=sr.sets.findIndex(x=>x.id==='MEP'||x.id==='EVP');
+ if(idx<0)idx=sr.sets.length;
+ sr.sets.splice(idx,0,{id:code,name:cand.name,date:'nouveau',note:'liste à charger',alts:null,open:true,counted:true,tcgdexId:cand.id,cards:[],cardsSar:[],cardsMur:[]});
+ persist();render();
+}
+async function discoverNewSets(sr,statusEl,btn){
+ btn.disabled=true;
+ try{
+  statusEl.textContent='Recherche de la série sur TCGdex…';
+  let serieId=sr.tcgdexSerie||null;
+  if(!serieId){
+   const anchor=sr.sets.find(x=>x.tcgdexId);
+   if(anchor){
+     try{const meta=await tcgdexSetMeta(anchor.tcgdexId,'fr');serieId=meta.serie||null;}catch(e){}
+   }
+  }
+  if(!serieId){statusEl.textContent='Série introuvable — ouvre d\u2019abord un set existant de la série puis réessaie.';btn.disabled=false;return;}
+  sr.tcgdexSerie=serieId;
+  const r=await fetch('https://api.tcgdex.net/v2/fr/series/'+serieId);
+  if(!r.ok)throw new Error('api');
+  const d=await r.json();
+  const known=new Set();
+  sr.sets.forEach(x=>{if(x.tcgdexId)known.add(String(x.tcgdexId).toLowerCase());known.add(norm(x.name));});
+  const fresh=(d.sets||[]).filter(x=>!known.has(String(x.id).toLowerCase())&&!known.has(norm(x.name||'')));
+  if(!fresh.length){statusEl.textContent='Aucun nouveau set — tout est déjà dans le tracker. Reviens après la prochaine sortie !';btn.disabled=false;persist();return;}
+  DISCOVER[sr.id]={};
+  fresh.forEach(x=>{DISCOVER[sr.id][x.id]=x;});
+  statusEl.innerHTML=fresh.length+' nouveau(x) set(s) trouvé(s) :'+fresh.map(x=>`<button class="add" style="margin-top:6px" data-a="addset" data-sid="${esc(x.id)}">+ Ajouter : ${esc(x.name)} (${esc(String(x.id).toUpperCase())})</button>`).join('');
+  btn.disabled=false;persist();
+ }catch(e){
+  statusEl.textContent='Échec de la recherche (hors ligne ?) — réessaie.';
+  btn.disabled=false;
+ }
+}
 function render(){
  renderTabs();
  renderDash();
@@ -859,8 +898,17 @@ function render(){
  root.innerHTML='';
  state.series.forEach(sr=>{
   if(state.filterSeries!=='all'&&state.filterSeries!==sr.id)return;
-  const visibleSets=sr.sets.filter(s=>state.filterSet==='all'||state.filterSet===s.id);
+  let visibleSets=sr.sets.filter(s=>state.filterSet==='all'||state.filterSet===s.id);
   if(!visibleSets.length)return;
+  /* Affichage : plus récents en haut, promos tout en bas (l'ordre des données est conservé) */
+  if(state.filterSet==='all'){
+   const isPromo=x=>x.id==='MEP'||x.id==='EVP';
+   visibleSets=visibleSets.slice().sort((a,b)=>{
+     const pa=isPromo(a)?1:0, pb=isPromo(b)?1:0;
+     if(pa!==pb)return pa-pb;
+     return sr.sets.indexOf(b)-sr.sets.indexOf(a);
+   });
+  }
   const h=document.createElement('div');
   h.className='serieshead';
   h.textContent=sr.name;
@@ -945,6 +993,26 @@ function render(){
    });
    root.appendChild(el);
   });
+  if(state.filterSet==='all'){
+   const disc=document.createElement('section');
+   disc.className='set discover';
+   disc.innerHTML=`<div style="padding:14px 14px 16px">
+     <div class="setname">🔍 Prochain set</div>
+     <div class="setmeta">Nouveau set sorti (ex: ME06 en novembre) ? Tape le bouton : il sera détecté et ajouté automatiquement, prêt à charger.</div>
+     <button class="loadbtn" style="margin-top:10px" data-a="discover">Chercher les nouveaux sets de la série</button>
+     <p class="footnote" data-role="discstatus" style="text-align:left;margin:8px 0 0"></p>
+    </div>`;
+   disc.addEventListener('click',ev=>{
+     const b=ev.target.closest('[data-a]');if(!b)return;
+     if(b.dataset.a==='discover'){
+       discoverNewSets(sr,disc.querySelector('[data-role=discstatus]'),b);
+     }else if(b.dataset.a==='addset'){
+       const cand=(DISCOVER[sr.id]||{})[b.dataset.sid];
+       if(cand)addDiscoveredSet(sr,cand);
+     }
+   });
+   root.appendChild(disc);
+  }
  });
  const reset=document.createElement('button');
  reset.className='add reset';
