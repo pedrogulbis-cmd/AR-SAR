@@ -210,7 +210,7 @@ svg path{transition:all .25s ease}
 <body>
 <div class="topbar">
   <button class="tcgpick" id="tcgPick"><span class="ic" id="tcgIcon">🔴</span> <span id="tcgName">Pokémon</span> <span style="color:var(--dim);font-size:11px">▾</span></button>
-  <span class="vtag" id="vTag">v2.6</span>
+  <span class="vtag" id="vTag">v2.7</span>
   <button class="themebtn" id="themeBtn" aria-label="Basculer le thème">🌙</button>
 </div>
 <header style="padding:6px 16px 8px">
@@ -528,35 +528,28 @@ function imgUrl(base,quality){
 }
 /* URLs construites : schéma d'assets TCGdex + images officielles pokemon.com */
 function candidateBases(setCode,setId,serie,localId){
+ /* pokemon.com est volontairement EXCLU : il renvoie un dos de carte au lieu d'une 404
+    quand le scan n'existe pas, ce qui bloque la chaîne de repli. */
  const out=[];
  const n=parseInt(localId,10);
  const pid=setId?String(setId).toLowerCase():null;
- let codeOff=null;
- /* 1. PkmnCards : vrais scans uniquement, 404 franc si absent — jamais de dos de carte */
  if(setCode&&!isNaN(n)){
    const code=String(setCode).toUpperCase().replace(/[^A-Z0-9]/g,'');
    const OFF={'MEP':'MEBSP','EVP':'SVP'};
-   codeOff=OFF[code]||code;
+   const codeOff=OFF[code]||code;
    const pad=String(n).padStart(3,'0');
    out.push('https://pkmncards.com/wp-content/uploads/'+codeOff.toLowerCase()+'_en_'+pad+'_std.jpg');
    out.push('https://pkmncards.com/wp-content/uploads/'+codeOff.toLowerCase()+'_en_'+pad+'_std.png');
+   const short=codeOff.toLowerCase().replace(/^([a-z]+)0(\d)$/,'$1$2');
+   if(short!==codeOff.toLowerCase()){
+     out.push('https://pkmncards.com/wp-content/uploads/'+short+'_en_'+pad+'_std.jpg');
+   }
  }
- /* 2. pokemontcg.io : bonne couverture, mais peut refléter les dos de pokemon.com */
  if(pid&&!isNaN(n)){
    out.push('https://images.pokemontcg.io/'+pid+'/'+n+'.png');
    const alt=pid.replace(/0(\d)/,'$1').replace(/\./g,'pt');
    if(alt!==pid)out.push('https://images.pokemontcg.io/'+alt+'/'+n+'.png');
  }
- /* 3. pokemon.com officiel : sert un dos de carte pour les scans manquants → repli assumé */
- if(codeOff){
-   const code=String(setCode).toUpperCase().replace(/[^A-Z0-9]/g,'');
-   out.push('https://assets.pokemon.com/assets/cms2/img/cards/web/'+codeOff+'/'+codeOff+'_FR_'+n+'.png');
-   out.push('https://assets.pokemon.com/assets/cms2/img/cards/web/'+codeOff+'/'+codeOff+'_EN_'+n+'.png');
-   if(codeOff!==code){
-     out.push('https://assets.pokemon.com/assets/cms2/img/cards/web/'+code+'/'+code+'_EN_'+n+'.png');
-   }
- }
- /* 4. Schéma d'assets TCGdex (page d'aide HTML si absent → ignorée par <img>) */
  if(serie&&setId&&localId!==undefined&&localId!==null&&localId!==''){
    out.push('https://assets.tcgdex.net/fr/'+serie+'/'+setId+'/'+localId);
    out.push('https://assets.tcgdex.net/en/'+serie+'/'+setId+'/'+localId);
