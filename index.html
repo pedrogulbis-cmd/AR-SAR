@@ -18,7 +18,8 @@
   --bg:#F4F5F8; --panel:#FFFFFF; --line:#E6E7EC; --line2:#D8DAE2;
   --txt:#15171E; --muted:#6B7180; --dim:#9AA0AE;
   --gold:#E0A82E; --violet:#6D5DF0; --red:#D2493A; --green:#1E9E6A;
-  --navbg:rgba(255,255,255,.9);
+  --navbg:rgba(255,255,255,.92);
+  --soft:#EEF0F5; --shadow:0 1px 3px rgba(16,20,40,.06),0 6px 20px rgba(16,20,40,.05);
   --display:'Bricolage Grotesque','Avenir Next',sans-serif;
   --body:'IBM Plex Sans',system-ui,sans-serif;
   --tabbar:calc(62px + env(safe-area-inset-bottom));
@@ -27,7 +28,8 @@ html[data-theme="sombre"]{
   --bg:#0E1220; --panel:#151B2C; --line:#232B40; --line2:#2A3350;
   --txt:#E8EAF2; --muted:#8A92A8; --dim:#5A6378;
   --gold:#F5C64F; --violet:#8B7BFF; --red:#FF8A7A; --green:#7BD88F;
-  --navbg:rgba(14,18,32,.9);
+  --navbg:rgba(14,18,32,.92);
+  --soft:#101626; --shadow:none;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
@@ -37,31 +39,33 @@ header{padding:26px 18px 8px}
 .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--violet);font-weight:600}
 h1{font-family:var(--display);font-weight:800;font-size:27px;line-height:1.15;margin-top:6px}
 h1 em{font-style:normal;color:var(--gold)}
-.sub{color:var(--muted);margin-top:6px;font-size:13.5px}
-.dash{margin:16px 12px;padding:16px 16px 18px;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.sub{color:var(--muted);margin-top:4px;font-size:13px}
+.dash{margin:14px 14px 4px;padding:18px 16px 16px;background:var(--panel);
+  border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
 .bigline{display:flex;align-items:baseline;gap:10px}
 .bignum{font-family:var(--display);font-size:40px;font-weight:800;color:var(--gold);line-height:1}
 .saved{margin-left:auto;font-size:11.5px;color:transparent;transition:color .3s}
 .saved.on{color:var(--green)}
 .scopenote{color:var(--dim);font-size:11px;margin-top:4px}
-.valueline{display:flex;align-items:baseline;gap:8px;margin-top:12px;padding:10px 12px;
-  background:#101626;border:1px solid var(--line);border-radius:12px}
-.valueline .lbl{color:var(--muted);font-size:12.5px}
-.valueline .val{font-family:var(--display);font-weight:800;font-size:21px;color:var(--green);margin-left:auto}
-.spentline{display:flex;align-items:baseline;gap:8px;margin-top:8px;padding:0 2px}
-.spentline .lbl{color:var(--muted);font-size:12.5px}
-.spentline .val{font-size:14px;font-weight:600;margin-left:auto}
+.valueline{display:flex;align-items:center;gap:8px;margin-top:16px;padding-top:14px;
+  border-top:1px solid var(--line)}
+.valueline .lbl{color:var(--muted);font-size:13px}
+.valueline .val{font-family:var(--display);font-weight:800;font-size:22px;color:var(--green);margin-left:auto}
+.spentline{display:flex;align-items:center;gap:8px;margin-top:6px}
+.spentline .lbl{color:var(--muted);font-size:13px}
+.spentline .val{font-size:15px;font-weight:600;margin-left:auto;font-family:var(--display)}
 .refreshrow{display:flex;align-items:center;gap:10px;margin-top:12px}
 .refreshbtn{flex:1;padding:11px;border-radius:12px;border:1px solid var(--line2);
-  background:#101626;color:var(--txt);font-family:var(--body);font-size:13.5px;font-weight:600}
+  background:var(--soft);color:var(--txt);font-family:var(--body);font-size:13.5px;font-weight:600}
 .refreshbtn:disabled{opacity:.55}
 .refreshstatus{color:var(--dim);font-size:11.5px;margin-top:6px}
 .track{height:7px;background:var(--line);border-radius:99px;margin-top:8px;overflow:hidden}
 .fill{height:100%;border-radius:99px;transition:width .4s ease}
 .fill.gold{background:linear-gradient(90deg,#F5C64F,#FFDE8A)}
-.restpanel{margin-top:14px;padding:12px;background:#101626;border:1px solid var(--line);border-radius:12px}
-.resthead{font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:8px}
-.restrow{display:flex;align-items:center;gap:9px;padding:6px 2px;font-size:13.5px}
+.restpanel{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.resthead{font-size:11px;color:var(--dim);font-weight:700;margin-bottom:6px;
+  text-transform:uppercase;letter-spacing:.09em}
+.restrow{display:flex;align-items:center;gap:10px;padding:9px 2px;font-size:14px}
 .restrow input[type=checkbox]{width:18px;height:18px;accent-color:#F5C64F;flex-shrink:0}
 .restrow .amt{margin-left:auto;color:var(--muted);font-weight:600;font-size:13px}
 .resttotal{display:flex;align-items:baseline;gap:8px;border-top:1px solid var(--line);
@@ -70,18 +74,20 @@ h1 em{font-style:normal;color:var(--gold)}
 .tabs{display:flex;gap:8px;padding:12px 12px 0}
 .tabbtn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line2);background:var(--panel);
   color:var(--muted);font-family:var(--display);font-weight:700;font-size:14.5px}
-.tabbtn.on{background:var(--gold);border-color:var(--gold);color:#161200}
+.tabbtn.on{background:var(--gold);border-color:var(--gold);color:#3A2A00}
 .filters{display:flex;gap:8px;padding:4px 12px 0;flex-wrap:wrap}
-.filters select{flex:1;min-width:140px;background:var(--panel);border:1px solid var(--line2);
-  border-radius:10px;color:var(--txt);font-size:13.5px;padding:10px;font-family:var(--body)}
+.filters{gap:8px;padding:10px 14px 2px}
+.filters select{flex:1;min-width:140px;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;color:var(--txt);font-size:13.5px;padding:11px 10px;font-family:var(--body);
+  box-shadow:var(--shadow);appearance:none;-webkit-appearance:none}
 main{padding:6px 12px 0;display:flex;flex-direction:column;gap:10px}
-.serieshead{font-family:var(--display);font-weight:800;font-size:15px;color:var(--violet);
-  padding:10px 4px 0;letter-spacing:.02em}
-.set{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.serieshead{font-family:var(--display);font-weight:800;font-size:12px;color:var(--dim);
+  padding:14px 6px 2px;letter-spacing:.1em;text-transform:uppercase}
+.set{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
 .set.done{border-color:#F5C64F55}
-.sethead{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;
-  padding:14px 14px 8px;background:none;border:none;color:inherit;font-family:var(--body);text-align:left}
-.code{font-family:var(--display);font-weight:700;font-size:12px;color:var(--bg);
+.sethead{width:100%;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+  padding:15px 15px 9px;background:none;border:none;color:inherit;font-family:var(--body);text-align:left}
+.code{font-family:var(--display);font-weight:700;font-size:11.5px;color:#fff;
   background:var(--violet);border-radius:6px;padding:2px 7px;letter-spacing:.03em}
 .code.sv{background:#E4604F;color:#fff}
 .setname{font-family:var(--display);font-weight:700;font-size:16.5px;margin-top:4px}
@@ -95,12 +101,12 @@ main{padding:6px 12px 0;display:flex;flex-direction:column;gap:10px}
 .constellation{display:flex;flex-wrap:wrap;gap:3px;padding:0 14px 12px}
 .constellation button{background:none;border:none;padding:1px;line-height:0}
 .rows{padding:0 12px 14px;display:flex;flex-direction:column;gap:6px}
-.row{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:10px;
-  border:1px solid var(--line);background:#141A2A}
-.row.owned{background:#1C2438}
+.row{display:flex;align-items:center;gap:8px;padding:8px;border-radius:12px;
+  border:1px solid var(--line);background:var(--soft)}
+.row.owned{background:var(--panel);border-color:var(--gold)}
 .row .starbtn{background:none;border:none;padding:2px;line-height:0;flex-shrink:0}
 .thumb{width:34px;height:47px;border-radius:5px;object-fit:cover;flex-shrink:0;
-  background:linear-gradient(160deg,#1A2136,#10162A);border:1px solid var(--line)}
+  background:var(--soft);border:1px solid var(--line)}
 .thumb.hide{display:none}
 .cardinfo{flex:1;min-width:0;background:none;border:none;color:inherit;text-align:left;
   font-family:var(--body);padding:0;display:flex;align-items:center;gap:8px}
@@ -116,14 +122,14 @@ input:focus{outline:2px solid #F5C64F44;outline-offset:1px}
 .nameedit{flex:1;min-width:0}
 .add{background:none;border:1px dashed var(--line2);border-radius:10px;color:var(--muted);
   font-size:13.5px;padding:10px;font-family:var(--body);margin-top:2px;width:100%}
-.loadbtn{background:#101626;border:1px solid var(--line2);border-radius:10px;color:var(--gold);
+.loadbtn{background:var(--soft);border:1px solid var(--line2);border-radius:10px;color:var(--gold);
   font-size:13.5px;font-weight:600;padding:11px;font-family:var(--body);width:100%}
 .loadbtn:disabled{opacity:.55}
-.reset{border-color:#3A2530;color:var(--red);margin:8px 0 0}
-.clearset{color:var(--red);border-color:#3A2530}
+.reset{border-color:var(--line2);color:var(--red);margin:8px 0 0}
+.clearset{color:var(--red);border-color:var(--line2)}
 .cntpill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:99px;padding:3px 8px;
   border:1px solid var(--line2);color:var(--dim);margin-bottom:4px}
-.cntpill.on{color:#161200;background:var(--gold);border-color:var(--gold)}
+.cntpill.on{color:#3A2A00;background:var(--gold);border-color:var(--gold)}
 .set.off{opacity:.55}
 .set.discover{border-style:dashed;border-color:var(--line2)}
 .footnote{color:var(--muted);font-size:11.5px;text-align:center;margin:10px 0 0;padding:0 14px}
@@ -135,17 +141,22 @@ svg path{transition:all .25s ease}
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);
   padding-bottom:env(safe-area-inset-bottom)}
 .tabbar-in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
-.navbtn{padding:9px 0 7px;display:flex;flex-direction:column;align-items:center;gap:3px;
-  color:var(--muted);font-size:11px;font-weight:600;border-top:2px solid transparent;margin-top:-1px;
-  font-family:var(--body)}
+.navbtn{padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:none;border:none;border-top:2px solid transparent;margin-top:-1px;
+  color:var(--muted);font-size:11px;font-weight:600;font-family:var(--body);
+  letter-spacing:.02em;transition:color .15s}
+.navbtn .ic{filter:grayscale(1);opacity:.5;transition:all .15s}
+.navbtn.on .ic{filter:none;opacity:1}
 .navbtn .ic{font-size:21px;line-height:1}
 .navbtn.on{color:var(--txt);border-top-color:var(--violet)}
 .topbar{display:flex;align-items:center;gap:10px;padding:20px 16px 4px}
 .tcgpick{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
-  border-radius:99px;padding:6px 12px 6px 10px;font-family:var(--display);font-weight:700;font-size:14px;color:var(--txt)}
+  border-radius:99px;padding:8px 14px 8px 12px;font-family:var(--display);font-weight:700;
+  font-size:14.5px;color:var(--txt);box-shadow:var(--shadow)}
 .tcgpick .ic{font-size:16px}
 .themebtn{margin-left:auto;background:var(--panel);border:1px solid var(--line);border-radius:99px;
-  width:40px;height:40px;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--txt)}
+  width:42px;height:42px;font-size:17px;display:flex;align-items:center;justify-content:center;
+  color:var(--txt);box-shadow:var(--shadow)}
 .sheet-bg{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.4);backdrop-filter:blur(2px)}
 .sheet-bg[hidden]{display:none}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:56;background:var(--panel);
@@ -158,11 +169,11 @@ svg path{transition:all .25s ease}
 .sheetopt .ic{font-size:20px}
 .sheetopt.on{border-color:var(--violet);color:var(--violet)}
 .sheet-handle{width:38px;height:4px;background:var(--line2);border-radius:2px;margin:8px auto 4px}
-.overlay{position:fixed;inset:0;background:rgba(8,11,20,.86);backdrop-filter:blur(4px);
+.overlay{position:fixed;inset:0;background:rgba(8,11,20,.72);backdrop-filter:blur(4px);
   display:flex;align-items:center;justify-content:center;z-index:50;padding:14px;
   padding-bottom:calc(14px + env(safe-area-inset-bottom))}
 .overlay[hidden]{display:none}
-.modal{width:100%;max-width:390px;background:var(--panel);border:1px solid var(--line);
+.modal{width:100%;max-width:390px;background:var(--panel);border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.3);
   border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:11px;touch-action:pan-y}
 .mtop{display:flex;align-items:center;gap:10px;min-width:0}
 .mstar{background:none;border:none;padding:2px;line-height:0;flex-shrink:0}
@@ -187,7 +198,7 @@ svg path{transition:all .25s ease}
 .btn{flex:1;padding:12px 10px;border-radius:12px;font-family:var(--body);font-size:14px;
   font-weight:600;text-align:center;text-decoration:none;border:1px solid var(--line2);
   color:var(--txt);background:none;display:block}
-.btn.buy{background:var(--gold);border-color:var(--gold);color:#161200}
+.btn.buy{background:var(--gold);border-color:var(--gold);color:#3A2A00}
 .spinner{width:26px;height:26px;border:3px solid var(--line2);border-top-color:var(--gold);
   border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -220,7 +231,7 @@ svg path{transition:all .25s ease}
     <span class="val" id="spentTxt">0,00 €</span>
   </div>
   <div class="refreshrow">
-    <button class="refreshbtn" id="refreshBtn">↻ Actualiser les cotes (Cardmarket via TCGdex)</button>
+    <button class="refreshbtn" id="refreshBtn">↻ Actualiser les cotes</button>
   </div>
   <div class="refreshstatus" id="refreshStatus"></div>
   <div class="restpanel">
@@ -320,14 +331,14 @@ const SV_DATA=[
  {id:'EVP',name:'Promos Écarlate et Violet',date:'2023-2025',note:'cartes promo — liste à charger',cards:[],slots:0,alts:['svp','promos ecarlate et violet','promo ecarlate violet']}
 ];
 const RIFT_DATA=[
- {id:'RB-OGN',name:'Origins (OGN)',sets:[
-   {id:'OGN',name:'Origins',date:'2025',note:'liste à charger',cards:[],slots:0},
-   {id:'OGS',name:'Origins Proving Grounds',date:'2025',note:'liste à charger',cards:[],slots:0},
-   {id:'OGPROMO',name:'Promos Origins',date:'2025',note:'liste à charger',cards:[],slots:0,alts:['origins promo','proving']}
+ {id:'RB',name:'Riftbound',sets:[
+   {id:'OGN',name:'Origins',date:'31/10/2025',note:'liste à charger',cards:[],slots:0,riftId:'OGN'},
+   {id:'OGS',name:'Origins — Proving Grounds',date:'2025',note:'liste à charger',cards:[],slots:0,riftId:'OGS'},
+   {id:'OPP',name:'Promos Organized Play',date:'2025',note:'liste à charger',cards:[],slots:0,riftId:'OPP'}
  ]}
 ];
 function buildSet(s){
- return {id:s.id,name:s.name,date:s.date,note:s.note,alts:s.alts||null,open:false,
+ return {id:s.id,name:s.name,date:s.date,note:s.note,alts:s.alts||null,riftId:s.riftId||null,open:false,
   cards:s.cards.length? s.cards.map(c=>({id:s.id+'-'+c[0],num:c[0],name:c[1],cote:c[2],owned:false,price:''}))
   : Array.from({length:s.slots||0},(_,i)=>({id:s.id+'-slot'+(i+1),num:'',name:'',cote:null,owned:false,price:''}))};
 }
@@ -560,6 +571,7 @@ function trySrcs(el,urls){
 async function findCardCandidates(set,num,card){
  const bases=[];
  if(card&&card.img)bases.push(card.img);
+ if(root_.tcg==='riftbound')return bases.slice();
  try{
    const found=set.tcgdexId?{id:set.tcgdexId}:await tcgdexResolveSet(set.name,set.alts);
    if(found){
@@ -585,6 +597,14 @@ function numKey(x){const n=parseInt(x,10);return isNaN(n)?String(x||'').trim().t
 const thumbCache={};
 async function hydrateThumbs(){
  const imgs=document.querySelectorAll('img.thumb[data-set][data-num]');
+ if(root_.tcg==='riftbound'){
+   imgs.forEach(el=>{
+     const set=allSets().find(x=>x.id===el.dataset.set);if(!set)return;
+     const c=cardsOf(set).find(x=>numKey(x.num)===numKey(el.dataset.num));
+     if(c&&c.img){el.referrerPolicy='no-referrer';el.onerror=()=>el.classList.add('hide');el.src=c.img;}
+   });
+   return;
+ }
  const bySets={};
  imgs.forEach(el=>{const s=el.dataset.set;(bySets[s]=bySets[s]||[]).push(el);});
  for(const setId in bySets){
@@ -640,6 +660,85 @@ function isMURRarity(r){
  const n=norm(r);
  if(root_.tcg==='riftbound')return n.includes('overnumbered')||n.includes('signature')||n.includes('secret');
  return n.includes('hyper')||n.includes('megaultra')||n.includes('gold')||n==='mur';
+}
+
+/* ── Fournisseur Riftbound : API Riftcodex (ouverte, sans clé) ── */
+const RIFT_API='https://api.riftcodex.com';
+function riftMatchesTab(c){
+ const m=(c.metadata||{}), cl=(c.classification||{});
+ const rar=norm(cl.rarity||'');
+ if(state.tab==='MUR')return !!(m.overnumbered||m.signature);
+ if(state.tab==='SAR')return !!m.alternate_art&&!(m.overnumbered||m.signature);
+ return rar==='epic'&&!m.alternate_art&&!(m.overnumbered||m.signature);
+}
+async function riftFetchAllCards(setId,statusEl){
+ const out=[];let page=1;
+ for(;;){
+   statusEl.textContent='Chargement des cartes… ('+out.length+')';
+   const r=await fetch(RIFT_API+'/cards?set_id='+encodeURIComponent(setId)+'&page='+page+'&size=100');
+   if(!r.ok)throw new Error('api');
+   const d=await r.json();
+   const items=Array.isArray(d)?d:(d.items||d.results||d.data||[]);
+   if(!items.length)break;
+   out.push(...items);
+   const total=(d&&(d.total||d.count))||null;
+   if(total&&out.length>=total)break;
+   if(items.length<100)break;
+   page++;
+   if(page>30)break;
+ }
+ return out;
+}
+async function riftLoadSet(set,statusEl,btnEl){
+ btnEl.disabled=true;
+ try{
+   statusEl.textContent='Connexion à Riftcodex…';
+   const setId=set.riftId||set.id;
+   const all=await riftFetchAllCards(setId,statusEl);
+   if(!all.length){statusEl.textContent='Aucune carte trouvée pour ce set (identifiant '+setId+').';btnEl.disabled=false;return;}
+   const sel=all.filter(riftMatchesTab);
+   if(!sel.length){
+     const groups={};
+     all.forEach(c=>{const k=((c.classification||{}).rarity)||'?';(groups[k]=groups[k]||[]).push(c);});
+     const keys=Object.keys(groups).filter(k=>k!=='?');
+     ANALYSIS[set.id]={};
+     keys.forEach(k=>{ANALYSIS[set.id][k]=groups[k].map(riftToCard);});
+     statusEl.innerHTML='Aucune carte « '+TCG().tabRar[state.tab]+' » ici. Charger par rareté :'+
+       keys.map(k=>`<button class="add" style="margin-top:6px" data-a="loadrar" data-r="${esc(k)}">Charger : ${esc(k)} (${groups[k].length})</button>`).join('');
+     btnEl.disabled=false;return;
+   }
+   mergeFound(set,sel.map(riftToCard));
+ }catch(e){
+   statusEl.textContent='Échec (hors ligne ou API indisponible) — réessaie.';
+   btnEl.disabled=false;
+ }
+}
+function riftToCard(c){
+ const media=c.media||{};
+ return {num:String(c.collector_number||c.public_code||c.riftbound_id||''),
+   name:c.name||'?',cote:null,img:media.image_url||null};
+}
+async function riftDiscover(sr,statusEl,btn){
+ btn.disabled=true;
+ try{
+   statusEl.textContent='Recherche des sets Riftbound…';
+   const r=await fetch(RIFT_API+'/sets?size=100');
+   if(!r.ok)throw new Error('api');
+   const d=await r.json();
+   const items=Array.isArray(d)?d:(d.items||d.results||d.data||[]);
+   const known=new Set();
+   sr.sets.forEach(x=>{known.add(String(x.riftId||x.id).toLowerCase());known.add(norm(x.name));});
+   const fresh=items.filter(x=>{
+     const sid=String(x.set_id||'').toLowerCase();
+     return sid&&!known.has(sid)&&!known.has(norm(x.name||''));
+   });
+   if(!fresh.length){statusEl.textContent='Aucun nouveau set — tout est déjà dans le tracker.';btn.disabled=false;return;}
+   DISCOVER[sr.id]={};
+   fresh.forEach(x=>{DISCOVER[sr.id][x.set_id]={id:x.set_id,name:x.name,rift:true};});
+   statusEl.innerHTML=fresh.length+' set(s) trouvé(s) :'+fresh.map(x=>
+     `<button class="add" style="margin-top:6px" data-a="addset" data-sid="${esc(x.set_id)}">+ Ajouter : ${esc(x.name)} (${esc(x.set_id)})</button>`).join('');
+   btn.disabled=false;
+ }catch(e){statusEl.textContent='Échec de la recherche — réessaie.';btn.disabled=false;}
 }
 
 /* ── Chargement automatique des AR d'un set vide ── */
@@ -724,6 +823,10 @@ async function loadSetAR(set,statusEl,btnEl){
 let refreshing=false;
 async function refreshPrices(){
  if(refreshing)return;
+ if(root_.tcg==='riftbound'){
+   document.getElementById('refreshStatus').textContent='Riftcodex ne fournit pas de cotes — saisis tes prix à la main dans le champ « payé € ».';
+   return;
+ }
  refreshing=true;
  const btn=document.getElementById('refreshBtn');
  const status=document.getElementById('refreshStatus');
@@ -934,7 +1037,12 @@ function renderFilters(){
 const DISCOVER={};
 function addDiscoveredSet(sr,cand){
  const code=String(cand.id).toUpperCase();
- if(sr.sets.some(x=>x.id===code||x.tcgdexId===cand.id))return;
+ if(sr.sets.some(x=>x.id===code||x.tcgdexId===cand.id||x.riftId===cand.id))return;
+ if(cand.rift){
+   sr.sets.unshift({id:code,name:cand.name,date:'nouveau',note:'liste à charger',alts:null,open:true,
+     counted:true,riftId:cand.id,cards:[],cardsSar:[],cardsMur:[]});
+   persist();render();return;
+ }
  let idx=sr.sets.findIndex(x=>x.id==='MEP'||x.id==='EVP');
  if(idx<0)idx=sr.sets.length;
  sr.sets.splice(idx,0,{id:code,name:cand.name,date:'nouveau',note:'liste à charger',alts:null,open:true,counted:true,tcgdexId:cand.id,cards:[],cardsSar:[],cardsMur:[]});
@@ -1019,7 +1127,7 @@ function render(){
        <input class="price" type="number" inputmode="decimal" data-f="price" data-c="${c.id}" value="${esc(c.price)}" placeholder="payé €">
      </div>`;
    }).join('');
-   const loader=`<button class="loadbtn" data-a="loadar">⤓ Charger la liste ${state.tab} automatiquement (TCGdex)</button>
+   const loader=`<button class="loadbtn" data-a="loadar">⤓ Charger la liste ${TCG().tabs[state.tab].split(' ').slice(1).join(' ')||state.tab} automatiquement</button>
      <p class="footnote" style="text-align:left;margin:6px 0 0" data-role="loadstatus"></p>`;
    el.innerHTML=`
     <button class="sethead" data-a="toggle" aria-expanded="${set.open}">
@@ -1056,7 +1164,7 @@ function render(){
      }
      else if(a==='loadar'){
        const st=el.querySelector('[data-role=loadstatus]');
-       loadSetAR(set,st,b);
+       if(root_.tcg==='riftbound')riftLoadSet(set,st,b); else loadSetAR(set,st,b);
      }
      else if(a==='loadrar'){
        const groups=ANALYSIS[set.id]||{};
@@ -1085,7 +1193,8 @@ function render(){
    disc.addEventListener('click',ev=>{
      const b=ev.target.closest('[data-a]');if(!b)return;
      if(b.dataset.a==='discover'){
-       discoverNewSets(sr,disc.querySelector('[data-role=discstatus]'),b);
+       const st=disc.querySelector('[data-role=discstatus]');
+       if(root_.tcg==='riftbound')riftDiscover(sr,st,b); else discoverNewSets(sr,st,b);
      }else if(b.dataset.a==='addset'){
        const cand=(DISCOVER[sr.id]||{})[b.dataset.sid];
        if(cand)addDiscoveredSet(sr,cand);
