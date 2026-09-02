@@ -1106,19 +1106,21 @@ function render(){
  hydrateThumbs();
 }
 
-const tabAR=document.getElementById('tabAR');
-const tabSAR=document.getElementById('tabSAR');
-const tabMUR=document.getElementById('tabMUR');
+/* renderTabs met à jour les libellés (icône + texte) et l'état actif des boutons de nav.
+   Les boutons sont résolus dynamiquement car créés plus bas dans le DOM. */
 function renderTabs(){
  const T=TCG().tabs;
- tabAR.textContent=T.AR;tabSAR.textContent=T.SAR;tabMUR.textContent=T.MUR;
- tabAR.classList.toggle('on',state.tab==='AR');
- tabSAR.classList.toggle('on',state.tab==='SAR');
- tabMUR.classList.toggle('on',state.tab==='MUR');
+ [['tabAR','AR'],['tabSAR','SAR'],['tabMUR','MUR']].forEach(([id,key])=>{
+   const b=document.getElementById(id);if(!b)return;
+   const parts=T[key].split(' ');
+   const ic=parts.shift();
+   const lb=parts.join(' ')||key;
+   const icEl=b.querySelector('.ic'), lbEl=b.querySelector('.lb');
+   if(icEl)icEl.textContent=ic;
+   if(lbEl)lbEl.textContent=lb;
+   b.classList.toggle('on',state.tab===key);
+ });
 }
-tabAR.onclick=()=>{if(state.tab!=='AR'){state.tab='AR';persist();render();}};
-tabSAR.onclick=()=>{if(state.tab!=='SAR'){state.tab='SAR';persist();render();}};
-tabMUR.onclick=()=>{if(state.tab!=='MUR'){state.tab='MUR';persist();render();}};
 
 /* ── Barre de navigation en bas (les 3 collections) ── */
 const tabbar=document.createElement('nav');
@@ -1129,6 +1131,11 @@ tabbar.innerHTML='<div class="tabbar-in">'+
  '<button class="navbtn" id="tabMUR"><span class="ic">🏆</span><span class="lb">MUR</span></button>'+
  '</div>';
 document.body.appendChild(tabbar);
+tabbar.addEventListener('click',e=>{
+ const b=e.target.closest('.navbtn');if(!b)return;
+ const key=b.id==='tabSAR'?'SAR':b.id==='tabMUR'?'MUR':'AR';
+ if(state.tab!==key){state.tab=key;persist();render();window.scrollTo(0,0);}
+});
 
 /* ── Bottom sheet : choix du TCG ── */
 const sheetBg=document.createElement('div');
