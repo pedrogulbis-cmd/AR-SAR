@@ -154,7 +154,10 @@ svg path{transition:all .25s ease}
   border-radius:99px;padding:8px 14px 8px 12px;font-family:var(--display);font-weight:700;
   font-size:14.5px;color:var(--txt);box-shadow:var(--shadow)}
 .tcgpick .ic{font-size:16px}
-.themebtn{margin-left:auto;background:var(--panel);border:1px solid var(--line);border-radius:99px;
+.vtag{margin-left:auto;font-size:11px;font-weight:700;color:var(--dim);
+  background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:5px 9px;
+  font-family:var(--display);letter-spacing:.03em}
+.themebtn{margin-left:8px;background:var(--panel);border:1px solid var(--line);border-radius:99px;
   width:42px;height:42px;font-size:17px;display:flex;align-items:center;justify-content:center;
   color:var(--txt);box-shadow:var(--shadow)}
 .sheet-bg{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.4);backdrop-filter:blur(2px)}
@@ -207,6 +210,7 @@ svg path{transition:all .25s ease}
 <body>
 <div class="topbar">
   <button class="tcgpick" id="tcgPick"><span class="ic" id="tcgIcon">🔴</span> <span id="tcgName">Pokémon</span> <span style="color:var(--dim);font-size:11px">▾</span></button>
+  <span class="vtag" id="vTag">v2.6</span>
   <button class="themebtn" id="themeBtn" aria-label="Basculer le thème">🌙</button>
 </div>
 <header style="padding:6px 16px 8px">
@@ -391,6 +395,8 @@ function normalizeState(){
   if(!Array.isArray(s.cardsSar))s.cardsSar=[];
   if(!Array.isArray(s.cardsMur))s.cardsMur=[];
   if(s.cards.length&&s.cards.every(c=>!c.name&&!c.owned&&!c.price&&!c.num))s.cards=[];
+  /* Purge des dos de carte mémorisés par erreur (anciennes versions) */
+  [s.cards,s.cardsSar,s.cardsMur].forEach(list=>(list||[]).forEach(c=>{if(isRiskyImg(c.img))c.img=null;}));
  }));
 }
 function TCG(){return TCGS[root_.tcg];}
@@ -569,9 +575,9 @@ function trySrcs(el,urls){
  next();
 }
 async function findCardCandidates(set,num,card){
- const bases=[];
- if(card&&card.img)bases.push(card.img);
- if(root_.tcg==='riftbound')return bases.slice();
+ const bases=[],risky=[];
+ if(card&&card.img)(isRiskyImg(card.img)?risky:bases).push(card.img);
+ if(root_.tcg==='riftbound')return bases.concat(risky);
  try{
    const found=set.tcgdexId?{id:set.tcgdexId}:await tcgdexResolveSet(set.name,set.alts);
    if(found){
@@ -579,17 +585,22 @@ async function findCardCandidates(set,num,card){
      const comb=await tcgdexSetCombined(found.id);
      const hit=comb.cards.find(x=>numKey(x.l)===numKey(num));
      if(hit&&hit.img&&bases.indexOf(hit.img)<0)bases.push(hit.img);
-     candidateBases(set.id,set.tcgdexId,comb.serie,hit?hit.l:num).forEach(b=>{if(bases.indexOf(b)<0)bases.push(b);});
+     candidateBases(set.id,set.tcgdexId,comb.serie,hit?hit.l:num).forEach(b=>{
+       const t=isRiskyImg(b)?risky:bases; if(t.indexOf(b)<0&&bases.indexOf(b)<0)t.push(b);});
    }
  }catch(e){}
  const urls=[];
- bases.forEach(b=>{
+ bases.concat(risky).forEach(b=>{
    const hi=imgUrl(b,'high'),lo=imgUrl(b,'low');
    if(urls.indexOf(hi)<0)urls.push(hi);
    if(urls.indexOf(lo)<0)urls.push(lo);
  });
  return urls;
 }
+/* pokemon.com renvoie un DOS DE CARTE quand le scan manque : ces URLs ne doivent jamais
+   être prioritaires ni mémorisées comme image définitive. */
+function isRiskyImg(u){return typeof u==='string'&&/assets\d*\.pokemon\.com/i.test(u);}
+
 /* Numéros promo parfois non numériques ('SVP123', '2025-006') : clé de comparaison tolérante */
 function numKey(x){const n=parseInt(x,10);return isNaN(n)?String(x||'').trim().toLowerCase():n;}
 
@@ -622,11 +633,12 @@ async function hydrateThumbs(){
      bySets[setId].forEach(el=>{
        const stCard=cardsOf(set).find(c=>numKey(c.num)===numKey(el.dataset.num));
        const hit=comb.cards.find(x=>numKey(x.l)===numKey(el.dataset.num));
-       const bases=[];
-       if(stCard&&stCard.img)bases.push(stCard.img);
+       const bases=[],risky=[];
+       if(stCard&&stCard.img)(isRiskyImg(stCard.img)?risky:bases).push(stCard.img);
        if(hit&&hit.img&&bases.indexOf(hit.img)<0)bases.push(hit.img);
-       candidateBases(set.id,set.tcgdexId,comb.serie,hit?hit.l:el.dataset.num).forEach(b=>{if(bases.indexOf(b)<0)bases.push(b);});
-       const urls=bases.map(b=>imgUrl(b,'low')).filter((u,i,a)=>a.indexOf(u)===i);
+       candidateBases(set.id,set.tcgdexId,comb.serie,hit?hit.l:el.dataset.num).forEach(b=>{
+         const t=isRiskyImg(b)?risky:bases; if(t.indexOf(b)<0&&bases.indexOf(b)<0)t.push(b);});
+       const urls=bases.concat(risky).map(b=>imgUrl(b,'low')).filter((u,i,a)=>a.indexOf(u)===i);
        if(urls.length)trySrcs(el,urls);
      });
    }catch(e){}
@@ -860,11 +872,11 @@ async function refreshPrices(){
          if(!r.ok)throw new Error();
          const d=await r.json();
          const p=pickPrice(d.pricing);
-         if(d.image&&!t.card.img)t.card.img=d.image;
+         if(d.image&&!t.card.img&&!isRiskyImg(d.image))t.card.img=d.image;
          else if(!d.image&&!t.card.img){
            try{
              const r2=await fetch('https://api.tcgdex.net/v2/en/cards/'+t.tid);
-             if(r2.ok){const d2=await r2.json();if(d2.image)t.card.img=d2.image;}
+             if(r2.ok){const d2=await r2.json();if(d2.image&&!isRiskyImg(d2.image))t.card.img=d2.image;}
            }catch(e2){}
          }
          if(p!==null){t.card.cote=Math.round(p*100)/100;updated++;}
