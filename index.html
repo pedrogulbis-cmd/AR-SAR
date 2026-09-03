@@ -119,6 +119,8 @@ input{background:var(--bg);border:1px solid var(--line2);border-radius:8px;color
 input::placeholder{color:#4A5268}
 input:focus{outline:2px solid #F5C64F44;outline-offset:1px}
 .price{width:60px;text-align:right;flex-shrink:0}
+.pricehidden{display:inline-block;color:var(--dim);font-size:13.5px;padding:7px 8px;
+  border:1px dashed var(--line);border-radius:8px;letter-spacing:1px}
 .nameedit{flex:1;min-width:0}
 .add{background:none;border:1px dashed var(--line2);border-radius:10px;color:var(--muted);
   font-size:13.5px;padding:10px;font-family:var(--body);margin-top:2px;width:100%}
@@ -154,10 +156,11 @@ svg path{transition:all .25s ease}
   border-radius:99px;padding:8px 14px 8px 12px;font-family:var(--display);font-weight:700;
   font-size:14.5px;color:var(--txt);box-shadow:var(--shadow)}
 .tcgpick .ic{font-size:16px}
+.themebtn.privon{border-color:var(--violet);color:var(--violet)}
 .vtag{margin-left:auto;font-size:11px;font-weight:700;color:var(--dim);
   background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:5px 9px;
   font-family:var(--display);letter-spacing:.03em}
-.themebtn{margin-left:8px;background:var(--panel);border:1px solid var(--line);border-radius:99px;
+.themebtn{margin-left:7px;background:var(--panel);border:1px solid var(--line);border-radius:99px;
   width:42px;height:42px;font-size:17px;display:flex;align-items:center;justify-content:center;
   color:var(--txt);box-shadow:var(--shadow)}
 .sheet-bg{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,.4);backdrop-filter:blur(2px)}
@@ -210,7 +213,8 @@ svg path{transition:all .25s ease}
 <body>
 <div class="topbar">
   <button class="tcgpick" id="tcgPick"><span class="ic" id="tcgIcon">🔴</span> <span id="tcgName">Pokémon</span> <span style="color:var(--dim);font-size:11px">▾</span></button>
-  <span class="vtag" id="vTag">v2.7</span>
+  <span class="vtag" id="vTag">v2.8</span>
+  <button class="themebtn" id="privBtn" aria-label="Masquer les montants">👁</button>
   <button class="themebtn" id="themeBtn" aria-label="Basculer le thème">🌙</button>
 </div>
 <header style="padding:6px 16px 8px">
@@ -361,7 +365,7 @@ const TCGS={
    seedSeries:()=>RIFT_DATA.map(rb=>({id:rb.id,name:rb.name,counted:true,sets:rb.sets.map(buildSet)}))}
 };
 function seedTcg(t){return {tab:'AR',lastPriceUpdate:null,filterSeries:'all',filterSet:'all',series:TCGS[t].seedSeries()};}
-function seed(){return {tcg:'pokemon',theme:'clair',data:{pokemon:seedTcg('pokemon'),riftbound:seedTcg('riftbound')}};}
+function seed(){return {tcg:'pokemon',theme:'clair',privacy:false,data:{pokemon:seedTcg('pokemon'),riftbound:seedTcg('riftbound')}};}
 
 let root_;
 try{const raw=localStorage.getItem(KEY);root_=raw?JSON.parse(raw):seed();}catch(e){root_=seed();}
@@ -378,6 +382,7 @@ if(root_&&root_.series&&!root_.data){ /* format v7-v24 : un seul TCG Pokémon */
 if(!root_.data)root_=seed();
 if(!root_.tcg)root_.tcg='pokemon';
 if(!root_.theme)root_.theme='clair';
+if(typeof root_.privacy!=='boolean')root_.privacy=false;
 if(!root_.data.riftbound)root_.data.riftbound=seedTcg('riftbound');
 if(!root_.data.pokemon)root_.data.pokemon=seedTcg('pokemon');
 
@@ -435,7 +440,10 @@ function star(filled,size){
  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.85 5.77 6.37.93-4.61 4.49 1.09 6.34L12 17.14l-5.7 3 1.09-6.35-4.61-4.49 6.37-.93L12 2.6z" fill="${filled?'#F5C64F':'none'}" stroke="${filled?'#F5C64F':'#3A4258'}" stroke-width="1.6" stroke-linejoin="round" style="${filled?'filter:drop-shadow(0 0 5px rgba(245,198,79,.55))':''}"/></svg>`;
 }
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
-function eur(n){return n.toFixed(2).replace('.',',')+' €';}
+function eur(n){
+ if(root_.privacy)return '••• €';
+ return n.toFixed(2).replace('.',',')+' €';
+}
 function buyUrl(name){return 'https://www.cardmarket.com/fr/Pokemon/Products/Search?searchString='+encodeURIComponent(name||'');}
 
 /* ── TCGdex ── */
@@ -1084,6 +1092,7 @@ async function discoverNewSets(sr,statusEl,btn){
 }
 function render(){
  renderHeader();
+ applyPrivacy();
  renderTabs();
  renderDash();
  renderFilters();
@@ -1129,7 +1138,9 @@ function render(){
      return `<div class="row${c.owned?' owned':''}">
        <button class="starbtn" data-a="star" data-c="${c.id}" aria-label="basculer">${star(c.owned,22)}</button>
        ${nameBlock}
-       <input class="price" type="number" inputmode="decimal" data-f="price" data-c="${c.id}" value="${esc(c.price)}" placeholder="payé €">
+       ${root_.privacy
+         ? `<span class="price pricehidden">•••</span>`
+         : `<input class="price" type="number" inputmode="decimal" data-f="price" data-c="${c.id}" value="${esc(c.price)}" placeholder="payé €">`}
      </div>`;
    }).join('');
    const loader=`<button class="loadbtn" data-a="loadar">⤓ Charger la liste ${TCG().tabs[state.tab].split(' ').slice(1).join(' ')||state.tab} automatiquement</button>
@@ -1280,6 +1291,15 @@ function applyTheme(){
  const meta=document.querySelector('meta[name=theme-color]');if(meta)meta.setAttribute('content',root_.theme==='sombre'?'#0E1220':'#F4F5F8');
 }
 document.getElementById('themeBtn').onclick=()=>{root_.theme=root_.theme==='sombre'?'clair':'sombre';applyTheme();persist();};
+function applyPrivacy(){
+ const b=document.getElementById('privBtn');
+ if(b){b.textContent=root_.privacy?'🙈':'👁';
+   b.setAttribute('aria-label',root_.privacy?'Afficher les montants':'Masquer les montants');
+   b.classList.toggle('privon',root_.privacy);}
+}
+document.getElementById('privBtn').onclick=()=>{
+ root_.privacy=!root_.privacy;applyPrivacy();persist();render();
+};
 
 /* ── En-tête dynamique selon le TCG ── */
 function renderHeader(){
