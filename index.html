@@ -213,7 +213,7 @@ svg path{transition:all .25s ease}
 <body>
 <div class="topbar">
   <button class="tcgpick" id="tcgPick"><span class="ic" id="tcgIcon">🔴</span> <span id="tcgName">Pokémon</span> <span style="color:var(--dim);font-size:11px">▾</span></button>
-  <span class="vtag" id="vTag">v2.8</span>
+  <span class="vtag" id="vTag">v2.9</span>
   <button class="themebtn" id="privBtn" aria-label="Masquer les montants">👁</button>
   <button class="themebtn" id="themeBtn" aria-label="Basculer le thème">🌙</button>
 </div>
@@ -673,6 +673,19 @@ function isMURRarity(r){
  const n=norm(r);
  if(root_.tcg==='riftbound')return n.includes('overnumbered')||n.includes('signature')||n.includes('secret');
  return n.includes('hyper')||n.includes('megaultra')||n.includes('gold')||n==='mur';
+}
+
+/* Vide les caches d'un set pour forcer une relecture complète chez le fournisseur */
+function bustSetCache(set){
+ const ids=[set.tcgdexId,set.riftId,set.id].filter(Boolean);
+ try{
+   Object.keys(localStorage).forEach(k=>{
+     if(/^tcgdx-set/.test(k)&&ids.some(id=>k.toLowerCase().indexOf(String(id).toLowerCase())>=0))localStorage.removeItem(k);
+   });
+   localStorage.removeItem('tcgdx-sets');
+ }catch(e){}
+ if(set.tcgdexId)delete combinedCache[set.tcgdexId];
+ delete thumbCache[set.id];
 }
 
 /* ── Fournisseur Riftbound : API Riftcodex (ouverte, sans clé) ── */
@@ -1163,6 +1176,8 @@ function render(){
     ${set.open?`<div class="rows">${rowsHtml}
       ${cds.filter(c=>c.name).length===0?loader:''}
       <button class="add" data-a="add">+ Ajouter une AR</button>
+      ${cds.filter(c=>c.name).length?`<button class="loadbtn" style="margin-top:6px" data-a="rescan">🔄 Rechercher les cartes manquantes</button>
+       <p class="footnote" data-role="loadstatus" style="text-align:left;margin:6px 0 0"></p>`:''}
       ${cds.length?`<button class="add clearset" data-a="clearset">🗑 Vider ce set (pour recharger)</button>`:''}
     </div>`:''}`;
    el.addEventListener('click',ev=>{
@@ -1180,6 +1195,12 @@ function render(){
      }
      else if(a==='loadar'){
        const st=el.querySelector('[data-role=loadstatus]');
+       if(root_.tcg==='riftbound')riftLoadSet(set,st,b); else loadSetAR(set,st,b);
+     }
+     else if(a==='rescan'){
+       const st=el.querySelector('[data-role=loadstatus]');
+       bustSetCache(set);
+       if(st)st.textContent='Relecture complète du set…';
        if(root_.tcg==='riftbound')riftLoadSet(set,st,b); else loadSetAR(set,st,b);
      }
      else if(a==='loadrar'){
