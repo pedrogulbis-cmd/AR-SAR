@@ -213,7 +213,7 @@ svg path{transition:all .25s ease}
 <body>
 <div class="topbar">
   <button class="tcgpick" id="tcgPick"><span class="ic" id="tcgIcon">🔴</span> <span id="tcgName">Pokémon</span> <span style="color:var(--dim);font-size:11px">▾</span></button>
-  <span class="vtag" id="vTag">v3.1</span>
+  <span class="vtag" id="vTag">v3.2</span>
   <button class="themebtn" id="privBtn" aria-label="Masquer les montants">👁</button>
   <button class="themebtn" id="themeBtn" aria-label="Basculer le thème">🌙</button>
 </div>
@@ -589,9 +589,9 @@ async function findCardCandidates(set,num,card){
      serie=comb.serie;
      hit=comb.cards.find(x=>numKey(x.l)===numKey(num))||null;
    }
+   if(card&&card.img&&bases.indexOf(card.img)<0)bases.push(card.img);
+   if(hit&&hit.img&&bases.indexOf(hit.img)<0)bases.push(hit.img);
    candidateBases(set.id,set.tcgdexId,serie,hit?hit.l:num).forEach(b=>{if(bases.indexOf(b)<0)bases.push(b);});
-   if(card&&card.img)(isRiskyImg(card.img)?risky:risky).push(card.img);
-   if(hit&&hit.img&&risky.indexOf(hit.img)<0)risky.push(hit.img);
  }catch(e){
    if(card&&card.img)risky.push(card.img);
  }
@@ -640,10 +640,11 @@ async function hydrateThumbs(){
      bySets[setId].forEach(el=>{
        const stCard=cardsOf(set).find(c=>numKey(c.num)===numKey(el.dataset.num));
        const hit=comb.cards.find(x=>numKey(x.l)===numKey(el.dataset.num));
-       const bases=[],risky=[];
+       const bases=[];
+       if(stCard&&stCard.img)bases.push(stCard.img);
+       if(hit&&hit.img&&bases.indexOf(hit.img)<0)bases.push(hit.img);
        candidateBases(set.id,set.tcgdexId,comb.serie,hit?hit.l:el.dataset.num).forEach(b=>{if(bases.indexOf(b)<0)bases.push(b);});
-       if(stCard&&stCard.img)risky.push(stCard.img);
-       if(hit&&hit.img&&risky.indexOf(hit.img)<0)risky.push(hit.img);
+       const risky=[];
        const urls=bases.concat(risky).map(b=>imgUrl(b,'low')).filter((u,i,a)=>a.indexOf(u)===i);
        if(urls.length)trySrcs(el,urls);
      });
