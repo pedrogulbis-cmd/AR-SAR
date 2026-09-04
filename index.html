@@ -213,7 +213,7 @@ svg path{transition:all .25s ease}
 <body>
 <div class="topbar">
   <button class="tcgpick" id="tcgPick"><span class="ic" id="tcgIcon">🔴</span> <span id="tcgName">Pokémon</span> <span style="color:var(--dim);font-size:11px">▾</span></button>
-  <span class="vtag" id="vTag">v2.9</span>
+  <span class="vtag" id="vTag">v3.0</span>
   <button class="themebtn" id="privBtn" aria-label="Masquer les montants">👁</button>
   <button class="themebtn" id="themeBtn" aria-label="Basculer le thème">🌙</button>
 </div>
@@ -536,8 +536,10 @@ function imgUrl(base,quality){
 }
 /* URLs construites : schéma d'assets TCGdex + images officielles pokemon.com */
 function candidateBases(setCode,setId,serie,localId){
- /* pokemon.com est volontairement EXCLU : il renvoie un dos de carte au lieu d'une 404
-    quand le scan n'existe pas, ce qui bloque la chaîne de repli. */
+ /* EXCLUS volontairement : pokemon.com ET les URLs TCGdex reconstruites.
+    Ces deux sources renvoient un DOS DE CARTE au lieu d'une 404 quand le scan
+    n'existe pas, ce qui bloque la chaîne de repli et affiche une fausse image.
+    TCGdex n'est utilisé que via l'URL réellement référencée par son API. */
  const out=[];
  const n=parseInt(localId,10);
  const pid=setId?String(setId).toLowerCase():null;
@@ -546,21 +548,19 @@ function candidateBases(setCode,setId,serie,localId){
    const OFF={'MEP':'MEBSP','EVP':'SVP'};
    const codeOff=OFF[code]||code;
    const pad=String(n).padStart(3,'0');
-   out.push('https://pkmncards.com/wp-content/uploads/'+codeOff.toLowerCase()+'_en_'+pad+'_std.jpg');
-   out.push('https://pkmncards.com/wp-content/uploads/'+codeOff.toLowerCase()+'_en_'+pad+'_std.png');
-   const short=codeOff.toLowerCase().replace(/^([a-z]+)0(\d)$/,'$1$2');
-   if(short!==codeOff.toLowerCase()){
+   const lc=codeOff.toLowerCase();
+   const short=lc.replace(/^([a-z]+)0(\d)$/,'$1$2');
+   out.push('https://pkmncards.com/wp-content/uploads/'+lc+'_en_'+pad+'_std.jpg');
+   out.push('https://pkmncards.com/wp-content/uploads/'+lc+'_en_'+pad+'_std.png');
+   if(short!==lc){
      out.push('https://pkmncards.com/wp-content/uploads/'+short+'_en_'+pad+'_std.jpg');
+     out.push('https://pkmncards.com/wp-content/uploads/'+short+'_en_'+pad+'_std.png');
    }
  }
  if(pid&&!isNaN(n)){
    out.push('https://images.pokemontcg.io/'+pid+'/'+n+'.png');
    const alt=pid.replace(/0(\d)/,'$1').replace(/\./g,'pt');
    if(alt!==pid)out.push('https://images.pokemontcg.io/'+alt+'/'+n+'.png');
- }
- if(serie&&setId&&localId!==undefined&&localId!==null&&localId!==''){
-   out.push('https://assets.tcgdex.net/fr/'+serie+'/'+setId+'/'+localId);
-   out.push('https://assets.tcgdex.net/en/'+serie+'/'+setId+'/'+localId);
  }
  return out;
 }
@@ -601,6 +601,7 @@ async function findCardCandidates(set,num,card){
 /* pokemon.com renvoie un DOS DE CARTE quand le scan manque : ces URLs ne doivent jamais
    être prioritaires ni mémorisées comme image définitive. */
 function isRiskyImg(u){return typeof u==='string'&&/assets\d*\.pokemon\.com/i.test(u);}
+function cleanNum(x){return String(x==null?'':x).trim();}
 
 /* Numéros promo parfois non numériques ('SVP123', '2025-006') : clé de comparaison tolérante */
 function numKey(x){const n=parseInt(x,10);return isNaN(n)?String(x||'').trim().toLowerCase():n;}
