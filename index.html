@@ -213,7 +213,7 @@ svg path{transition:all .25s ease}
 <body>
 <div class="topbar">
   <button class="tcgpick" id="tcgPick"><span class="ic" id="tcgIcon">🔴</span> <span id="tcgName">Pokémon</span> <span style="color:var(--dim);font-size:11px">▾</span></button>
-  <span class="vtag" id="vTag">v3.0</span>
+  <span class="vtag" id="vTag">v3.1</span>
   <button class="themebtn" id="privBtn" aria-label="Masquer les montants">👁</button>
   <button class="themebtn" id="themeBtn" aria-label="Basculer le thème">🌙</button>
 </div>
@@ -576,20 +576,25 @@ function trySrcs(el,urls){
  next();
 }
 async function findCardCandidates(set,num,card){
+ /* Ordre : sources à 404 franc d'abord (pokemontcg.io, PkmnCards — images EN),
+    puis TCGdex en dernier car il sert un DOS DE CARTE pour les scans manquants. */
  const bases=[],risky=[];
- if(card&&card.img)(isRiskyImg(card.img)?risky:bases).push(card.img);
- if(root_.tcg==='riftbound')return bases.concat(risky);
+ if(root_.tcg==='riftbound'){if(card&&card.img)bases.push(card.img);return bases;}
  try{
    const found=set.tcgdexId?{id:set.tcgdexId}:await tcgdexResolveSet(set.name,set.alts);
+   let hit=null,serie=null;
    if(found){
      set.tcgdexId=set.tcgdexId||found.id;
      const comb=await tcgdexSetCombined(found.id);
-     const hit=comb.cards.find(x=>numKey(x.l)===numKey(num));
-     if(hit&&hit.img&&bases.indexOf(hit.img)<0)bases.push(hit.img);
-     candidateBases(set.id,set.tcgdexId,comb.serie,hit?hit.l:num).forEach(b=>{
-       const t=isRiskyImg(b)?risky:bases; if(t.indexOf(b)<0&&bases.indexOf(b)<0)t.push(b);});
+     serie=comb.serie;
+     hit=comb.cards.find(x=>numKey(x.l)===numKey(num))||null;
    }
- }catch(e){}
+   candidateBases(set.id,set.tcgdexId,serie,hit?hit.l:num).forEach(b=>{if(bases.indexOf(b)<0)bases.push(b);});
+   if(card&&card.img)(isRiskyImg(card.img)?risky:risky).push(card.img);
+   if(hit&&hit.img&&risky.indexOf(hit.img)<0)risky.push(hit.img);
+ }catch(e){
+   if(card&&card.img)risky.push(card.img);
+ }
  const urls=[];
  bases.concat(risky).forEach(b=>{
    const hi=imgUrl(b,'high'),lo=imgUrl(b,'low');
@@ -636,10 +641,9 @@ async function hydrateThumbs(){
        const stCard=cardsOf(set).find(c=>numKey(c.num)===numKey(el.dataset.num));
        const hit=comb.cards.find(x=>numKey(x.l)===numKey(el.dataset.num));
        const bases=[],risky=[];
-       if(stCard&&stCard.img)(isRiskyImg(stCard.img)?risky:bases).push(stCard.img);
-       if(hit&&hit.img&&bases.indexOf(hit.img)<0)bases.push(hit.img);
-       candidateBases(set.id,set.tcgdexId,comb.serie,hit?hit.l:el.dataset.num).forEach(b=>{
-         const t=isRiskyImg(b)?risky:bases; if(t.indexOf(b)<0&&bases.indexOf(b)<0)t.push(b);});
+       candidateBases(set.id,set.tcgdexId,comb.serie,hit?hit.l:el.dataset.num).forEach(b=>{if(bases.indexOf(b)<0)bases.push(b);});
+       if(stCard&&stCard.img)risky.push(stCard.img);
+       if(hit&&hit.img&&risky.indexOf(hit.img)<0)risky.push(hit.img);
        const urls=bases.concat(risky).map(b=>imgUrl(b,'low')).filter((u,i,a)=>a.indexOf(u)===i);
        if(urls.length)trySrcs(el,urls);
      });
